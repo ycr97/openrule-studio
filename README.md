@@ -1,6 +1,6 @@
-# OpenRule Studio · F1 视觉基础
+# OpenRule Studio · F1 视觉基础与 F2 编辑接入
 
-Vue 3 + TypeScript + Vite + Vue Router + shadcn-vue + Tailwind CSS 4。当前只展示 D0 订单准入定义的静态视觉样例；节点选择、Stage 选择、画布缩放和只读配置弹窗可用。保存、发布、试运行、其它导航入口均没有业务调用或成功反馈。
+Vue 3 + TypeScript + Vite + Vue Router + shadcn-vue + Tailwind CSS 4。F1 完成工作台视觉基础；F2 已接入服务端 Flow 列表、精确版本读取、草稿编辑、保存、校验和试运行。发布操作仍未接入，页面按钮保持禁用。高级节点配置编辑留待后续阶段。
 
 ## 启动与检查
 
@@ -16,7 +16,9 @@ npm run lint
 npm run build
 ```
 
-`src/components/ui/` 中 Button、Badge、Dialog、Separator 由 shadcn-vue CLI 生成；主题和原型布局变量集中在 `src/style.css`。页面入口是 `src/features/editor/FlowEditorPage.vue`，静态定义副本来自 `open-rule/docs/contracts/studio-m1/fixtures/valid/order-admission.definition.json`。F2 接入后端时用 Schema/OpenAPI DTO 替换 `src/features/editor/sample.ts` 的只读展示适配；勿复用浏览器规则解释器。
+本地联调时先启动 `open-rule/openrule-studio-server`。Vite 将 `/api/v2` 代理到 `http://127.0.0.1:8080`；可用 `STUDIO_API_ORIGIN` 改写目标地址。
+
+`src/components/ui/` 中 Button、Badge、Dialog、Separator 由 shadcn-vue CLI 生成；主题和原型布局变量集中在 `src/style.css`。`src/features/editor/fixtures/` 保留 D0 订单准入定义作为视觉参考。编辑器通过 `src/api/` 访问后端，数值 JSON 保留原始十进制字面量；浏览器不执行规则。
 
 ## 浏览器视觉对照
 
@@ -28,9 +30,8 @@ npm run build
 
 浏览器控制台检查：0 errors、0 warnings。弹窗实际打开并可通过 Escape 关闭；窄屏主画布可滚动，属性面板位于下方。
 
-## F2 接续
+## F2 当前范围与后续
 
-1. 按 D0 OpenAPI/Schema 建立 `src/api/` 的无损十进制 JSON 适配、DTO 与错误映射；不要把原型 model 当网络协议。
-2. 将 `FlowEditorPage` 的静态定义替换为精确版本读取、草稿 revision 与未保存状态；保存、校验、试运行和发布按钮只在真实服务端路径可用后启用。
-3. 将 NodePalette、InspectorPanel 和 NodeConfigDialog 的只读展示扩展为 Stage/条件/五类节点编辑，同时保留现有布局和颜色变量。
-4. 以 D0 的 OA/ST fixture 驱动前端 Mock/联调，避免增加第二套浏览器规则执行器。
+- 已接入 Flow 列表与创建、版本切换、草稿 revision、未保存提醒、Stage/基础节点及条件编辑、保存、校验和保存后试运行。
+- RuleSet、Scorecard、DecisionTable 当前保留完整配置供查看，专用编辑器和发布交互尚未接入。
+- 上述视觉截图记录的是 F1 静态界面，不能作为 F2 功能验收截图。
