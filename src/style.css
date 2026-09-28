@@ -336,3 +336,12 @@
 .create-flow { flex-wrap:wrap; }
 .create-flow h2 { width:100%; font-size:16px; }
 @media(max-width:767px) { .workspace-panel,.flow-list-page { padding:16px; } .version-row { flex-wrap:wrap; } .editor-actions { flex-wrap:wrap; } }
+
+.compact-node-add { display:none; }
+@media(max-width:1000px) { .compact-node-add { display:inline-block; } }
+
+.leave-overlay { position:fixed; inset:0; z-index:50; display:grid; place-items:center; background:#15254066; padding:20px; }
+.leave-card { width:min(420px,100%); padding:24px; border-radius:12px; background:#fff; box-shadow:0 15px 60px #18325320; }
+.leave-card h2 { font-size:18px; margin-bottom:8px; }
+.leave-card p { color:#637590; font-size:13px; margin-bottom:20px; }
+.leave-card > div { display:flex; justify-content:flex-end; gap:8px; }

@@ -1,7 +1,7 @@
-import { parseJson, stringifyJson } from './lossless'
-import type { ErrorBody, ExecutionResult, FlowListItem, FlowResource, FlowSummary, Page, ValidationReport } from './types'
-import type { FlowDefinition } from '@/features/editor/sample'
-const base = import.meta.env.VITE_API_BASE ?? '/api/v2'
+import { decodeTransport, parseJson, stringifyJson } from './lossless.ts'
+import type { ErrorBody, ExecutionResult, FlowListItem, FlowResource, FlowSummary, Page, ValidationReport } from './types.ts'
+import type { FlowDefinition } from '../features/editor/sample.ts'
+const base = import.meta.env?.VITE_API_BASE ?? '/api/v2'
 export class ApiError extends Error {
   readonly status: number
   readonly body: ErrorBody
@@ -13,7 +13,7 @@ export class ApiError extends Error {
   get conflict() { return this.status === 409 && this.body.code === 'OR-REVISION-CONFLICT' }
 }
 export function errorText(error: unknown): string {
-  if (error instanceof ApiError) return `${error.body.code}: ${error.message}${error.body.traceId ? ` · trace ${error.body.traceId}` : ''}`
+  if (error instanceof ApiError) return error.conflict ? 'OR-REVISION-CONFLICT：服务端 revision 已变化；本地输入保留，请手动核对最新版本' : `${error.body.code}: ${error.message}${error.body.traceId ? ` · trace ${error.body.traceId}` : ''}`
   return error instanceof Error ? error.message : '请求失败'
 }
 async function request<T>(path: string, method = 'GET', payload?: unknown): Promise<T> {
@@ -22,7 +22,7 @@ async function request<T>(path: string, method = 'GET', payload?: unknown): Prom
   catch { throw new Error('无法连接后端 API；请检查服务地址和 Vite 代理') }
   const text = await response.text()
   let parsed: unknown
-  try { parsed = parseJson(text) } catch { throw new Error(`HTTP ${response.status} 返回了无效 JSON`) }
+  try { parsed = decodeTransport(parseJson(text)) } catch { throw new Error(`HTTP ${response.status} 返回了无效 JSON`) }
   if (!response.ok) throw new ApiError(response.status, parsed as ErrorBody)
   return parsed as T
 }

@@ -1,37 +1,46 @@
-# OpenRule Studio · F1 视觉基础与 F2 编辑接入
+# OpenRule Studio
 
-Vue 3 + TypeScript + Vite + Vue Router + shadcn-vue + Tailwind CSS 4。F1 完成工作台视觉基础；F2 已接入服务端 Flow 列表、精确版本读取、草稿编辑、保存、校验和试运行。发布操作仍未接入，页面按钮保持禁用。高级节点配置编辑留待后续阶段。
+Vue 3 + TypeScript + Vite + Vue Router + shadcn-vue + Tailwind CSS 4. F1 provides the prototype-based workbench; F2 connects Flow editing to the real Studio v2 API. The browser sends definitions and facts to the server and does not execute rules.
 
-## 启动与检查
+## Start
 
-需要 Node.js 24.14+ 和 npm。依赖版本固定在 `package.json` 与 `package-lock.json`。
+Node.js 24.14+ and npm are required. Start the backend described in [`openrule-studio-server/README.md`](../open-rule/openrule-studio-server/README.md) on port 8080, then:
 
 ```sh
+cd /Users/ycr/IdeaProjects/Sandbox/openrule-studio
 npm ci
 npm run dev
 # http://127.0.0.1:5173/
+```
 
+Vite proxies `/api/v2` to `http://127.0.0.1:8080`. Set `STUDIO_API_ORIGIN=http://127.0.0.1:PORT` when starting Vite to change the proxy target. For an API mounted at a different browser path, set `VITE_API_BASE` at build time. The Studio host's MySQL configuration uses `STUDIO_JDBC_URL`, `STUDIO_DB_USER`, and `STUDIO_DB_PASSWORD` as documented in its README.
+
+```sh
+npm run test
 npm run typecheck
 npm run lint
 npm run build
 ```
 
-本地联调时先启动 `open-rule/openrule-studio-server`。Vite 将 `/api/v2` 代理到 `http://127.0.0.1:8080`；可用 `STUDIO_API_ORIGIN` 改写目标地址。
+## F2 behavior
 
-`src/components/ui/` 中 Button、Badge、Dialog、Separator 由 shadcn-vue CLI 生成；主题和原型布局变量集中在 `src/style.css`。`src/features/editor/fixtures/` 保留 D0 订单准入定义作为视觉参考。编辑器通过 `src/api/` 访问后端，数值 JSON 保留原始十进制字面量；浏览器不执行规则。
+- Lists Flows and versions, reads exact versions, creates Flows and drafts, and opens published versions read-only. A published version can seed the next draft.
+- Edits Stage order, execution mode, timeout, `when`, Operator conditions/output, and Terminal decisions. The shared condition builder supports the D0 condition AST. RuleSet, Scorecard, and DecisionTable show their complete server configuration read-only; saving a document preserves them.
+- Saves with `expectedRevision`, displays validation issues with Stage/Node/field targets, and runs the saved revision through server validation and SIMULATE. The result shows actual version/revision, decision, reasons, checksum, and node statuses/failures. Editing the definition or facts marks a previous result stale.
+- Preserves business JSON number lexemes during parse, edit, and transport, including integers beyond JavaScript's safe range. `null` and absent properties stay distinct. Protocol version/revision are strings.
+- On save failure or 409, local input stays in place. A save response arriving after additional edits advances the server revision but does not replace those edits. Navigation away from an unsaved draft opens a discard dialog; browser unload is guarded.
 
-## 浏览器视觉对照
+The UI uses `src/api/` for transport/DTOs, `src/features/editor/state.ts` for request and edit state, and `src/features/editor/components/` for the canvas and property controls. The D0 order fixture in `src/features/editor/fixtures/` remains a visual reference; route content comes from the API. The Publish button stays disabled until F3.
 
-同一 Playwright Chromium、相同 viewport 下打开了原型根目录的离线 `index.html` 和本工程的 Vite 页面。对照尺寸为 1440×900、1920×1080；另外检查了 390×844 窄屏。1920 宽度下，216px 工作台侧栏、节点库/画布/属性区分界、Stage 卡片水平位置与原型一致；颜色、字体回退、边框和圆角沿用原型变量。F1 的按钮禁用、只读字段和静态样例标识属于本阶段真实状态。
+## Verification and screenshots
 
-- [Vue 1440×900](output/playwright/studio-1440x900.png) / [原型 1440×900](output/playwright/prototype-1440x900.png)
-- [Vue 1920×1080](output/playwright/studio-1920x1080.png) / [原型 1920×1080](output/playwright/prototype-1920x1080.png)
-- [评分卡只读弹窗](output/playwright/studio-scorecard-dialog-1440x900.png) / [窄屏 390×844](output/playwright/studio-mobile-390x844.png)
+F2 was checked against the local MySQL-backed Studio server through Vite's proxy. The small `f2_smoke` Flow completed create, edit, save, reload, validation, and SIMULATE with Operator + Terminal; the server returned `DECIDED / APPROVE` and successful node statuses. A comparison using `9007199254740992` and `9007199254740993` produced different Operator hit results. The full `order_admission` definition (6 stages, 8 nodes) was loaded and saved unchanged; Decimal-aware comparison showed document equality after refresh. A concurrent write produced `OR-REVISION-CONFLICT` while the browser kept its unsaved edit. A published version was read-only and could create the next draft. The unsaved-leave dialog's cancel and discard paths were checked in the browser.
 
-浏览器控制台检查：0 errors、0 warnings。弹窗实际打开并可通过 Escape 关闭；窄屏主画布可滚动，属性面板位于下方。
+- [F2 order admission, 1440×900](output/playwright/f2-order-admission-1440x900.png)
+- F1 visual baseline: [Vue 1440×900](output/playwright/studio-1440x900.png), [prototype 1440×900](output/playwright/prototype-1440x900.png), [Vue 1920×1080](output/playwright/studio-1920x1080.png), [prototype 1920×1080](output/playwright/prototype-1920x1080.png), [mobile 390×844](output/playwright/studio-mobile-390x844.png)
 
-## F2 当前范围与后续
+The F2 screenshot is from the live API-backed order-admission page. The F1 screenshots document the original visual comparison and are not F2 behavior evidence.
 
-- 已接入 Flow 列表与创建、版本切换、草稿 revision、未保存提醒、Stage/基础节点及条件编辑、保存、校验和保存后试运行。
-- RuleSet、Scorecard、DecisionTable 当前保留完整配置供查看，专用编辑器和发布交互尚未接入。
-- 上述视觉截图记录的是 F1 静态界面，不能作为 F2 功能验收截图。
+## F3 continuation
+
+Add dedicated RuleSet, Scorecard, and DecisionTable configuration editors; complete order-admission result presentation; and the publish workflow. Keep the existing lossless JSON transport and revision handling. The server capability boundary is documented in [`B2-IMPLEMENTATION.md`](../open-rule/docs/contracts/studio-m1/B2-IMPLEMENTATION.md); do not synthesize execution results in the browser.

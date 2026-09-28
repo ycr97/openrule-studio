@@ -1,4 +1,4 @@
-import type { FlowDefinition } from '@/features/editor/sample'
+import type { FlowDefinition } from '../features/editor/sample.ts'
 export type ValidationIssue = { code: string; severity: 'ERROR'; message: string; pointer: string; stageId: string | null; nodeId: string | null; itemId: string | null }
 export type ValidationReport = { valid: boolean; issues: ValidationIssue[] }
 export type FlowSummary = { flowId: string; flowName: string; version: string; status: 'DRAFT' | 'PUBLISHED'; revision: string; definitionChecksum: string | null }

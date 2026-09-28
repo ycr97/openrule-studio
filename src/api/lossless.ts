@@ -31,21 +31,16 @@ export function parseJson(text: string): unknown {
     rewritten += char
   }
   const parsed: unknown = JSON.parse(rewritten)
-  function restore(value: unknown, key = ''): unknown {
+  function restore(value: unknown): unknown {
     if (typeof value === 'string' && value.startsWith(marker)) {
       const index = Number(value.slice(marker.length))
       if (Number.isInteger(index) && index >= 0 && index < values.length) {
         const raw = values[index]!
-        if (integerKeys.has(key)) {
-          const number = Number(raw)
-          if (!Number.isSafeInteger(number)) throw new RangeError(`传输整数超出安全范围: ${key}`)
-          return number
-        }
         return decimal(raw)
       }
     }
     if (Array.isArray(value)) return value.map(item => restore(item))
-    if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, restore(v, k)]))
+    if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, restore(v)]))
     return value
   }
   return restore(parsed)
@@ -60,4 +55,20 @@ export function stringifyJson(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(stringifyJson).join(',')}]`
   if (value && typeof value === 'object') return `{${Object.entries(value).map(([k, v]) => `${JSON.stringify(k)}:${stringifyJson(v)}`).join(',')}}`
   throw new TypeError('不支持的 JSON 值')
+}
+
+/** Only fixed protocol integers are converted; arbitrary facts/config values are untouched. */
+export function decodeTransport(value: unknown, business = false): unknown {
+  if (Array.isArray(value)) return value.map(item => decodeTransport(item, business))
+  if (isDecimal(value)) return value
+  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, item]) => {
+    const nextBusiness = business || ['facts', 'value', 'variables', 'outputs', 'details', 'config'].includes(key)
+    if (!nextBusiness && integerKeys.has(key) && isDecimal(item)) {
+      const number = Number(item.text)
+      if (!Number.isSafeInteger(number)) throw new RangeError(`传输整数超出安全范围: ${key}`)
+      return [key, number]
+    }
+    return [key, decodeTransport(item, nextBusiness)]
+  }))
+  return value
 }
