@@ -257,7 +257,7 @@
   .canvas-scroll { padding: 0 10px 10px; }
 }
 @media (max-width:1000px) {
-  .editor-content { grid-template-columns: minmax(340px,1fr) 290px; }
+  .editor-content { grid-template-columns: minmax(0,1fr) 290px; }
   .node-palette { display: none; }
   .editor-title { flex-wrap: wrap; gap: 14px; }
   .editor-actions { margin-left: auto; }
@@ -345,3 +345,50 @@
 .leave-card h2 { font-size:18px; margin-bottom:8px; }
 .leave-card p { color:#637590; font-size:13px; margin-bottom:20px; }
 .leave-card > div { display:flex; justify-content:flex-end; gap:8px; }
+
+/* F3 dedicated node editors */
+.config-top-fields,.config-edit-fields { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:17px; }
+.config-section-head,.config-card-head,.config-card-actions { display:flex; align-items:center; gap:10px; }
+.config-section-head { justify-content:space-between; margin:18px 0 10px; }
+.config-section-head h3 { margin:0; }
+.config-edit-card,.config-characteristic { border:1px solid #e4eaf3; border-radius:9px; background:#fcfdff; padding:14px; margin:10px 0; }
+.config-characteristic { padding:17px; background:#f8faff; }
+.config-characteristic .config-edit-card { background:#fff; }
+.config-card-head { min-height:28px; color:#526785; font-size:12px; }
+.config-card-head .number { flex:0 0 auto; }
+.config-card-head strong { font-family:ui-monospace,SFMono-Regular,monospace; font-size:11px; }
+.config-card-actions { margin-left:auto; }
+.config-card-actions button { border:1px solid #e1e8f2; border-radius:5px; padding:4px 8px; color:#4d6ca7; background:#fff; font-size:11px; }
+.config-card-actions button:disabled { opacity:.45; }
+.config-card-actions .danger { color:#b34852; }
+.config-edit-card .field-label,.config-characteristic>.field-label { margin-top:13px; }
+.config-condition-label { color:#667b99; font-size:11px; margin:14px 0 8px; }
+.config-dialog .condition-builder { margin-bottom:4px; }
+.fact-presets { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 14px; }
+.publish-card { width:min(480px,100%); }
+.publish-card .field-label { margin:16px 0; }
+.publish-card textarea { width:100%; min-height:80px; padding:10px; border:1px solid #dfe7f3; border-radius:7px; resize:vertical; }
+.execution-stale { opacity:.72; }
+.result-summary { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin:16px 0; }
+.result-summary>div { border:1px solid #e3eaf5; border-radius:7px; background:#f8faff; padding:10px; }
+.result-summary small,.result-summary strong { display:block; }
+.result-summary small { color:#7588a2; font-size:10px; margin-bottom:5px; }
+.result-summary strong { font-size:14px; color:#29436b; overflow-wrap:anywhere; }
+.result-notice { padding:10px; border:1px solid #d8e8f8; border-radius:6px; background:#f1f7ff; color:#48668d!important; }
+.result-failure { color:#ac4049!important; }
+.result-meta { display:flex; flex-wrap:wrap; gap:6px 15px; color:#71829a; font-size:11px; }
+.result-meta code { overflow-wrap:anywhere; }
+.execution-result h3 { font-size:14px; margin:20px 0 10px; }
+.result-stage { border:1px solid #e5ebf4; border-radius:8px; margin:12px 0; overflow:hidden; }
+.result-stage-head,.result-node-head { display:flex; align-items:center; flex-wrap:wrap; gap:9px; font-size:12px; }
+.result-stage-head { padding:10px 13px; background:#f7f9fd; color:#59718d; }
+.result-stage-head b { color:#344e71; }
+.result-stage-head small { color:#a26b46; }
+.result-node-card { margin:10px; padding:12px; border:1px solid #e9eef6; border-radius:7px; color:#637792; font-size:12px; }
+.result-node-head strong { color:#365173; }
+.result-node-head b { margin-left:auto; color:#355f9c; }
+.result-node-card p { margin:9px 0 0; overflow-wrap:anywhere; }
+.result-detail { display:flex; align-items:center; flex-wrap:wrap; gap:7px 13px; padding:8px 10px; margin-top:7px; border-radius:5px; background:#f4f8ff; }
+.result-detail strong { color:#245db0; }
+.result-detail small { color:#72839a; }
+@media(max-width:767px) { .config-top-fields,.config-edit-fields,.result-summary { grid-template-columns:1fr; } .config-card-head { flex-wrap:wrap; } .config-card-actions { margin-left:0; width:100%; } }

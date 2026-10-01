@@ -37,4 +37,6 @@ export const studioApi = {
   saveDraft: (flowId: string, version: string, expectedRevision: string, document: FlowDefinition) => request<FlowResource>(versionPath(flowId, version), 'PUT', { expectedRevision, document }),
   validate: (flowId: string, version: string, document: FlowDefinition) => request<ValidationReport>(`${versionPath(flowId, version)}/validations`, 'POST', { document }),
   simulate: (flowId: string, version: string, expectedRevision: string, facts: unknown) => request<ExecutionResult>(`${versionPath(flowId, version)}/simulations`, 'POST', { expectedRevision, requestId: crypto.randomUUID(), bizId: `studio-${Date.now()}`, facts, timeoutMillis: 3000 }),
+  publish: (flowId: string, version: string, expectedRevision: string, changeNote: string) => request<FlowResource>(`${versionPath(flowId, version)}/publish`, 'POST', { expectedRevision, changeNote }),
+  executeVersion: (flowId: string, version: string, facts: unknown) => request<ExecutionResult>(`/flows/${segment(flowId)}/versions/${segment(version)}/executions`, 'POST', { requestId: crypto.randomUUID(), bizId: `studio-live-${Date.now()}`, facts, timeoutMillis: 3000 }),
 }

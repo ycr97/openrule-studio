@@ -70,3 +70,116 @@ test('late version response cannot replace a newer exact-version read', async ()
   assert.equal(state.resource.value.version,'2')
   assert.equal(state.document.value.flowName,'New')
 })
+
+test('publish requires saved content and uses current revision', async () => {
+  let calls = 0
+  const state = createEditorState({publish:async (_id,_version,revision,note) => {calls++; assert.equal(revision,'2'); assert.equal(note,'reviewed'); return {...resource('3'),status:'PUBLISHED'}}})
+  state.install(resource('2'))
+  state.mutate(doc => {doc.flowName='Local edit'})
+  assert.equal(await state.publish('reviewed'),false)
+  assert.equal(calls,0)
+  state.install(resource('2'))
+  assert.equal(await state.publish('reviewed'),true)
+  assert.equal(state.readOnly.value,true)
+  assert.equal(calls,1)
+})
+
+test('lost publish response checks exact resource before deciding outcome', async () => {
+  let reads = 0
+  const state = createEditorState({publish:async () => {throw new Error('network lost')},getVersion:async () => {reads++; return {...resource('3'),status:'PUBLISHED'}}})
+  state.install(resource('2'))
+  assert.equal(await state.publish('reviewed'),true)
+  assert.equal(reads,1)
+  assert.equal(state.readOnly.value,true)
+  assert.match(state.message.value,/已确认服务端发布成功/)
+})
+
+test('publish revision conflict retains the draft and does not retry', async () => {
+  let calls = 0
+  const body = {code:'OR-REVISION-CONFLICT',message:'conflict',requestId:null,traceId:null,issues:[],execution:null}
+  const state = createEditorState({publish:async () => {calls++; throw new ApiError(409,body)}})
+  state.install(resource('2'))
+  assert.equal(await state.publish('reviewed'),false)
+  assert.equal(calls,1)
+  assert.equal(state.resource.value.revision,'2')
+  assert.equal(state.readOnly.value,false)
+  assert.match(state.message.value,/OR-REVISION-CONFLICT/)
+})
+
+test('facts changed during validation remain stale and duplicate simulation is blocked', async () => {
+  const pending = deferred()
+  let calls = 0
+  const state = createEditorState({validate:() => pending.promise,simulate:async (_id,_version,_revision,facts) => {calls++; assert.equal(facts.old,true); return {revision:'1',status:'DECIDED',nodeResults:[],stageResults:[]}}})
+  state.install(resource())
+  state.factsText.value = '{"old":true}'
+  const run = state.saveAndSimulate()
+  assert.equal(state.simulating.value,true)
+  state.factsText.value = '{"new":true}'
+  await state.saveAndSimulate()
+  pending.resolve({valid:true,issues:[]})
+  await run
+  assert.equal(calls,1)
+  assert.equal(state.staleResult.value,true)
+})
+
+test('save response after navigation cannot replace the new version', async () => {
+  const pending = deferred()
+  const state = createEditorState({saveDraft:() => pending.promise,getVersion:async () => ({...resource('1','Next'),version:'2'})})
+  state.install(resource())
+  state.mutate(doc => {doc.flowName='Saved'})
+  const save = state.save()
+  await state.load('test_flow','2')
+  pending.resolve(resource('2','Saved'))
+  assert.equal(await save,false)
+  assert.equal(state.resource.value.version,'2')
+  assert.equal(state.document.value.flowName,'Next')
+})
+
+test('unknown publish outcome never retries while exact status is unavailable', async () => {
+  let writes = 0
+  const state = createEditorState({publish:async () => {writes++; throw new Error('response lost')},getVersion:async () => {throw new Error('status unavailable')}})
+  state.install(resource())
+  assert.equal(await state.publish('reviewed'),false)
+  assert.equal(await state.publish('reviewed'),false)
+  assert.equal(writes,1)
+  assert.equal(state.document.value.flowName,'Flow')
+})
+
+test('technical failure displays server execution instead of losing it', async () => {
+  const execution = {revision:'1',status:'FAILED',decision:null,nodeResults:[],stageResults:[]}
+  const body = {code:'OR-EXECUTION-FAILED',message:'type error',issues:[],execution}
+  const state = createEditorState({validate:async () => ({valid:true,issues:[]}),simulate:async () => {throw new ApiError(500,body)}})
+  state.install(resource())
+  await state.saveAndSimulate()
+  assert.equal(state.result.value.status,'FAILED')
+  assert.equal(state.staleResult.value,false)
+})
+
+test('gateway error also checks publication status before retrying', async () => {
+  let writes=0
+  const state=createEditorState({publish:async () => {writes++; throw new ApiError(502,{code:'GATEWAY',message:'response lost',issues:[]})},getVersion:async () => ({...resource('2'),status:'PUBLISHED'})})
+  state.install(resource())
+  assert.equal(await state.publish('reviewed'),true)
+  assert.equal(writes,1)
+  assert.equal(state.readOnly.value,true)
+})
+
+test('recovery of a different published document preserves local content', async () => {
+  const state=createEditorState({publish:async () => {throw new Error('response lost')},getVersion:async () => ({...resource('3','Other writer'),status:'PUBLISHED'})})
+  state.install(resource('2','Reviewed content'))
+  assert.equal(await state.publish('reviewed'),false)
+  assert.equal(state.document.value.flowName,'Reviewed content')
+  assert.match(state.message.value,/不同内容/)
+})
+
+test('publish response after navigation cannot install an old version', async () => {
+  const pending=deferred()
+  const state=createEditorState({publish:() => pending.promise,getVersion:async () => ({...resource('1','Next'),version:'2'})})
+  state.install(resource())
+  const publish=state.publish('reviewed')
+  await state.load('test_flow','2')
+  pending.resolve({...resource('2'),status:'PUBLISHED'})
+  assert.equal(await publish,false)
+  assert.equal(state.resource.value.version,'2')
+  assert.equal(state.document.value.flowName,'Next')
+})
