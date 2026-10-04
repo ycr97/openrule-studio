@@ -1,6 +1,6 @@
 # OpenRule Studio
 
-Vue 3 + TypeScript + Vite + Vue Router + shadcn-vue + Tailwind CSS 4。F1 提供原型视觉基础，F2 接入真实 Studio v2 API，F3 完成三类专用编辑器、完整结果和发布闭环。规则由 Java 服务端执行，调用方提供完整 facts。
+Vue 3 + TypeScript + Vite + Vue Router + shadcn-vue + Tailwind CSS 4。F1 提供原型视觉基础，F2 接入真实 Studio v2 API，F3 完成三类专用编辑器、完整结果和发布闭环；V1 已完成 Studio M1 总体验收与范围内缺陷修复。规则由 Java 服务端执行，调用方提供完整 facts。
 
 ## 启动
 
@@ -53,6 +53,10 @@ STUDIO_API_BASE=http://127.0.0.1:8081/api/v2 \
 
 F1 原型对照基线保留在 `output/playwright/prototype-*`、`studio-*`；F2 证据为 `f2-order-admission-1440x900.png`。F3 继续使用原有颜色、字体、圆角、工作台和卡片布局；当前浏览器实际桌面视口 1280×720，窄视口 827×850，结果使用整页截图。
 
-## V1 接续
+## V1 总体验收与交付
 
-F3 功能可以进入总体验收。V1 需跑完整 OA/ST 矩阵、浏览器边界与异常回归、MySQL 重启持久化及发布不可变性，并由后端修复交接中列出的编译错误定位粒度。Provider、Scene、历史 Trace 查询沿用 M1 范围安排。
+2026-10-04：Studio M1 验收通过，OA 的19个冻结子用例共38次 SIMULATE/LIVE、ST-01～ST-13全部通过；前端25项测试、typecheck、lint、build通过。两类后端定位错误已修复，前端按稳定 ID / JSON Pointer 定位，不再解析错误文案推测分箱。保存响应未知时先查询精确状态；代理日志触发 Tailwind/Vite 重复加载的问题已修复；画布与专用编辑器完成1440×900、1920×1080、640×900真实截图对照。
+
+入口：[V1交接](docs/V1-HANDOFF.md)、[完整验收报告](../open-rule/docs/contracts/studio-m1/V1-ACCEPTANCE.md)、[重复加载事件及恢复](docs/V1-AUTOMATION-INCIDENT.md)。上面的F3记录保留为历史证据；当前结论以V1报告为准。
+
+精选V1截图沿用 `output/playwright/` 的版本管理约定；原始日志、数据库备份、源码验收快照和其余截图留在本地证据目录。交付仅本地提交，不push、合并或部署，不自动进入M2。

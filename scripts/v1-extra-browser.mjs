@@ -1,0 +1,108 @@
+import {execFileSync} from 'node:child_process'
+import {readFileSync,writeFileSync} from 'node:fs'
+const phase=process.argv[2],cfg=JSON.parse(readFileSync('../open-rule/output/v1/extra-manifest.json','utf8'))
+const phases={
+  async incomplete(page,cfg){
+    await page.goto(`http://127.0.0.1:5175/flows/${cfg.incomplete}/versions/1`,{waitUntil:'domcontentloaded'})
+    await page.getByLabel('阶段名称',{exact:true}).fill('V1 incomplete saved and reread')
+    await page.getByRole('button',{name:'保存草稿',exact:true}).click()
+    await page.waitForFunction(()=>document.querySelector('.notice')?.textContent.includes('草稿已保存'))
+    await page.reload({waitUntil:'domcontentloaded'})
+    if(await page.getByLabel('阶段名称',{exact:true}).inputValue()!=='V1 incomplete saved and reread')throw new Error('draft not persisted')
+    await page.getByRole('button',{name:'校验',exact:true}).click()
+    await page.locator('.issue-strip').waitFor()
+    await page.getByRole('button',{name:'保存并试运行',exact:true}).first().click()
+    await page.waitForFunction(()=>document.querySelector('.notice')?.textContent.includes('校验发现'))
+    if(await page.locator('.result-summary').count())throw new Error('invalid draft has result')
+    await page.getByRole('button',{name:'发布版本',exact:true}).click()
+    await page.getByPlaceholder('描述本次规则变更').fill('V1 incomplete must reject')
+    await page.getByRole('button',{name:'确认发布',exact:true}).click()
+    await page.waitForFunction(()=>document.querySelector('.publish-card')?.textContent.includes('OR-DEF-VALIDATION'))
+    await page.screenshot({path:'output/playwright/v1-incomplete-publish-rejected.png'})
+    await page.getByRole('button',{name:'取消',exact:true}).click()
+    await page.locator('.canvas-node').first().click()
+    await page.getByLabel('决策码',{exact:true}).fill('APPROVE')
+    await page.getByLabel('原因码（逗号分隔）',{exact:true}).fill('V1_OK')
+    await page.getByRole('button',{name:'保存草稿',exact:true}).click()
+    await page.waitForFunction(()=>document.querySelector('.notice')?.textContent.includes('草稿已保存'))
+    await page.getByRole('button',{name:'校验',exact:true}).click()
+    await page.waitForFunction(()=>document.querySelector('.notice')?.textContent.includes('校验通过'))
+    await page.getByLabel('决策码',{exact:true}).fill('')
+    await page.getByRole('button',{name:'保存草稿',exact:true}).click()
+    await page.waitForFunction(()=>document.querySelector('.notice')?.textContent.includes('草稿已保存'))
+    await page.getByRole('button',{name:'发布版本',exact:true}).click()
+    await page.getByPlaceholder('描述本次规则变更').fill('V1 actual invalid revision after earlier valid check')
+    await page.getByRole('button',{name:'确认发布',exact:true}).click()
+    await page.waitForFunction(()=>document.querySelector('.publish-card')?.textContent.includes('OR-DEF-VALIDATION'))
+    const r=await(await page.request.get(`http://127.0.0.1:8081/api/v2/admin/flows/${cfg.incomplete}/versions/1`)).json()
+    if(r.status!=='DRAFT'||r.validation.valid)throw new Error('published stale validated content')
+    await page.screenshot({path:'output/playwright/v1-revalidate-actual-revision.png'})
+    await page.getByRole('button',{name:'取消',exact:true}).click()
+    return {status:'PASS',tests:['incomplete save/reload/validation/execution/publish','validate valid, edit/save invalid, actual revision rejected'],revision:r.revision}
+  },
+  async locations(page,cfg){
+    const results=[]
+    for(const [flow,expected] of [[cfg.bin,cfg.binIssue],[cfg.conflict,cfg.conflictIssue]]){
+      await page.goto(`http://127.0.0.1:5175/flows/${flow}/versions/1`,{waitUntil:'domcontentloaded'})
+      const pending=page.waitForResponse(r=>r.url().endsWith('/validations'))
+      await page.getByRole('button',{name:'校验',exact:true}).click()
+      const report=await(await pending).json(),issue=report.issues[0]
+      if(issue.pointer!==expected.pointer||issue.nodeId!==expected.nodeId||issue.itemId!==expected.itemId)throw new Error('wrong reordered server location')
+      await page.locator('.issue-strip button').first().click()
+      await page.locator('.config-dialog').waitFor()
+      const focused=await page.evaluate(()=>({field:document.activeElement?.getAttribute('data-field'),item:document.activeElement?.closest('[data-item-id]')?.getAttribute('data-item-id')??null}))
+      if(focused.field!==(flow===cfg.bin?'value':'outputKey')||focused.item!==expected.itemId)throw new Error('wrong focus: '+JSON.stringify(focused))
+      if(!await page.locator('.config-meta').innerText().then(t=>t.includes(expected.nodeId)))throw new Error('wrong editor')
+      await page.screenshot({path:`output/playwright/v1-reordered-${flow===cfg.bin?'bin':'conflict'}-location.png`})
+      results.push({issue,focused})
+      await page.getByRole('button',{name:'Close',exact:true}).click()
+    }
+    return {status:'PASS',tests:['Stage/Node/characteristic/bin input arrays reversed; real click opens correct stable item and field'],results}
+  },
+  async precision(page,cfg){
+    const decimal='0.234567890123456789012345678901234567891',integer='9007199254740995'
+    await page.goto(`http://127.0.0.1:5175/flows/${cfg.precision}/versions/1`,{waitUntil:'domcontentloaded'})
+    await page.locator('.canvas-node').filter({hasText:'买家风险评分卡'}).click()
+    await page.getByRole('button',{name:'编辑完整配置',exact:true}).click()
+    const field=page.locator('[data-item-id="b_age_old"] [data-field="score"]')
+    if(await field.inputValue()!==cfg.decimal)throw new Error('loaded decimal rounded')
+    await field.fill(decimal)
+    await page.getByRole('button',{name:'Close',exact:true}).click()
+    await page.locator('.canvas-node').filter({hasText:'订单金额分层'}).click()
+    await page.getByRole('button',{name:'编辑完整配置',exact:true}).click()
+    const intField=page.locator('[data-item-id="t_high"] [data-field="ruleValue"]')
+    if(await intField.inputValue()!=='9007199254740993')throw new Error('loaded integer rounded')
+    await intField.fill(integer)
+    await page.getByRole('button',{name:'Close',exact:true}).click()
+    const put=page.waitForRequest(r=>r.method()==='PUT')
+    await page.getByRole('button',{name:'保存草稿',exact:true}).click()
+    const rawPut=(await put).postData()
+    if(!rawPut.includes(decimal)||!rawPut.includes(integer)||rawPut.includes('"'+decimal+'"'))throw new Error('outgoing literal rounded or stringified')
+    await page.waitForFunction(()=>document.querySelector('.notice')?.textContent.includes('草稿已保存'))
+    await page.reload({waitUntil:'domcontentloaded'})
+    await page.getByRole('button',{name:'输入事实',exact:true}).click()
+    const facts='{"order":{"amount":680,"country":"JP"},"buyer":{"ageDays":365},"metrics":{"refundRate":0.08},"risk":{"blacklisted":false},"counter":9007199254740993,"explicit":null}'
+    await page.getByLabel('facts JSON').fill(facts)
+    const simulation=page.waitForResponse(r=>r.url().endsWith('/simulations'))
+    await page.getByRole('button',{name:'保存并试运行',exact:true}).first().click()
+    const response=await simulation,result=await response.json()
+    if(result.decision.score!=='10.'+decimal.split('.')[1])throw new Error('score rounded: '+result.decision.score)
+    if(!response.request().postData().includes('9007199254740993')||!response.request().postData().includes('"explicit":null'))throw new Error('input lost bigint/null')
+    await page.screenshot({path:'output/playwright/v1-precision-execution.png',fullPage:true})
+    await page.getByRole('button',{name:'发布版本',exact:true}).click()
+    await page.getByPlaceholder('描述本次规则变更').fill('V1 exact decimal and bigint UI round trip')
+    await page.getByRole('button',{name:'确认发布',exact:true}).click()
+    await page.waitForFunction(()=>document.querySelector('.title-line')?.textContent.includes('PUBLISHED'))
+    const r=await page.request.get(`http://127.0.0.1:8081/api/v2/admin/flows/${cfg.precision}/versions/1`),rawRead=await r.text(),resource=JSON.parse(rawRead)
+    if(!rawRead.includes(decimal)||!rawRead.includes(integer))throw new Error('persisted literals rounded')
+    const live=await page.request.post(`http://127.0.0.1:8081/api/v2/flows/${cfg.precision}/versions/1/executions`,{headers:{'Content-Type':'application/json'},data:'{"requestId":"v1-precision-live","bizId":"v1","facts":'+facts+',"timeoutMillis":3000}'}),liveResult=await live.json()
+    if(liveResult.definitionChecksum!==resource.definitionChecksum||liveResult.decision.score!==result.decision.score)throw new Error('published precision/checksum mismatch')
+    return {status:'PASS',decimal,integer,score:result.decision.score,checksum:resource.definitionChecksum,rawPut,factsRequest:response.request().postData()}
+  }
+}
+if(!phases[phase])throw new Error('Usage: node scripts/v1-extra-browser.mjs incomplete|locations|precision')
+const code=`async(page)=>await (${phases[phase].toString().replace(/^async \w+\(/,'async function(')})(page,${JSON.stringify(cfg)})`
+const result=execFileSync(process.env.PWCLI??'/Users/ycr/.codex/skills/playwright/scripts/playwright_cli.sh',['-s=v1','run-code',code],{encoding:'utf8',timeout:65000,maxBuffer:2e6})
+writeFileSync(`output/v1/extra-browser-${phase}.txt`,result)
+if(result.includes('### Error')||!result.includes('"status":"PASS"'))throw new Error(result)
+console.log(result)

@@ -183,3 +183,37 @@ test('publish response after navigation cannot install an old version', async ()
   assert.equal(state.resource.value.version,'2')
   assert.equal(state.document.value.flowName,'Next')
 })
+
+test('lost save response queries exact state and confirms persisted content', async () => {
+  let writes=0,reads=0
+  const state=createEditorState({saveDraft:async()=>{writes++;throw new Error('lost')},getVersion:async()=>{reads++;return resource('2','Saved')}})
+  state.install(resource())
+  state.mutate(doc=>{doc.flowName='Saved'})
+  assert.equal(await state.save(),true)
+  assert.equal(writes,1);assert.equal(reads,1)
+  assert.equal(state.resource.value.revision,'2');assert.equal(state.dirty.value,false)
+})
+test('unknown save outcome blocks repeated writes while exact status is unavailable', async()=>{
+  let writes=0,reads=0
+  const state=createEditorState({saveDraft:async()=>{writes++;throw new Error('lost')},getVersion:async()=>{reads++;throw new Error('offline')}})
+  state.install(resource());state.mutate(doc=>{doc.flowName='Saved'})
+  assert.equal(await state.save(),false);assert.equal(await state.save(),false)
+  assert.equal(writes,1);assert.equal(reads,2);assert.equal(state.document.value.flowName,'Saved')
+})
+test('save recovery advances revision without overwriting edits made during status lookup',async()=>{
+  const pending=deferred()
+  const state=createEditorState({saveDraft:async()=>{throw new Error('lost')},getVersion:()=>pending.promise})
+  state.install(resource());state.mutate(doc=>{doc.flowName='Saved'})
+  const save=state.save();await new Promise(resolve=>setImmediate(resolve))
+  state.mutate(doc=>{doc.flowName='Newer'})
+  pending.resolve(resource('2','Saved'))
+  assert.equal(await save,true);assert.equal(state.resource.value.revision,'2')
+  assert.equal(state.document.value.flowName,'Newer');assert.equal(state.dirty.value,true)
+})
+test('save recovery of different server content retains edits and blocks retries',async()=>{
+  let writes=0
+  const state=createEditorState({saveDraft:async()=>{writes++;throw new Error('lost')},getVersion:async()=>resource('2','Other writer')})
+  state.install(resource());state.mutate(doc=>{doc.flowName='Mine'})
+  assert.equal(await state.save(),false);assert.equal(await state.save(),false)
+  assert.equal(writes,1);assert.equal(state.document.value.flowName,'Mine');assert.equal(state.resource.value.revision,'1')
+})

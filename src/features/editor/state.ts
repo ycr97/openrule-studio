@@ -22,6 +22,7 @@ export function createEditorState(api: typeof studioApi = studioApi) {
   let loadSerial = 0
   let simulationSerial = 0
   let publicationUnknown = false
+  let saveUnknown: { flowId: string; version: string; revision: string; snapshot: string; serial: number } | null = null
   const factsText = ref('{\n  "order": { "amount": 680, "country": "JP" },\n  "buyer": { "id": "buyer_1024", "ageDays": 365 },\n  "metrics": { "refundRate": 0.08 },\n  "risk": { "blacklisted": false },\n  "channel": "web"\n}')
   const dirty = computed(() => !!document.value && stringifyJson(document.value) !== baseline.value)
   const staleResult = computed(() => !!result.value && (resultSerial.value !== editSerial.value || resultFacts.value !== factsText.value || result.value.revision !== resource.value?.revision))
@@ -38,6 +39,7 @@ export function createEditorState(api: typeof studioApi = studioApi) {
   async function load(flowId: string, version: string) {
     const serial = ++loadSerial
     publicationUnknown = false
+    saveUnknown = null
     simulationSerial++
     saving.value = false; validating.value = false; simulating.value = false; publishing.value = false
     loading.value = true
@@ -58,6 +60,26 @@ export function createEditorState(api: typeof studioApi = studioApi) {
     editSerial.value++
     issues.value = []
   }
+  async function checkSaveOutcome(epoch: number): Promise<'confirmed' | 'unchanged' | 'blocked'> {
+    const pending = saveUnknown
+    if (!pending) return 'unchanged'
+    try {
+      const current = await api.getVersion(pending.flowId, pending.version)
+      if (epoch !== loadSerial) return 'blocked'
+      if (current.status !== 'DRAFT') { message.value = '保存状态已变化；请核对服务端版本，本地输入保留'; return 'blocked' }
+      if (current.revision !== pending.revision && stringifyJson(current.document) === pending.snapshot) {
+        resource.value = current
+        baseline.value = stringifyJson(current.document)
+        if (editSerial.value === pending.serial) { document.value = current.document; issues.value = current.validation.issues }
+        saveUnknown = null
+        message.value = editSerial.value === pending.serial ? `已确认草稿保存成功 · revision ${current.revision}` : `已确认 revision ${current.revision} 保存成功；后续编辑仍未保存`
+        return 'confirmed'
+      }
+      if (current.revision === pending.revision) { saveUnknown = null; return 'unchanged' }
+      message.value = '保存响应丢失且服务端内容已变化；请核对最新版本，本地输入保留'
+    } catch { if (epoch === loadSerial) message.value = '保存结果未知；无法查询服务端状态，本地输入保留。恢复连接后再核对' }
+    return 'blocked'
+  }
   async function save(): Promise<boolean> {
     if (!resource.value || !document.value || saving.value || publishing.value || readOnly.value) return false
     saving.value = true
@@ -66,7 +88,25 @@ export function createEditorState(api: typeof studioApi = studioApi) {
     const serial = editSerial.value
     const snapshot = document.value
     try {
-      const saved = await api.saveDraft(resource.value.flowId, resource.value.version, resource.value.revision, snapshot)
+      if (saveUnknown) {
+        const outcome = await checkSaveOutcome(epoch)
+        if (outcome === 'blocked') return false
+        if (outcome === 'confirmed') return true
+      }
+      if (epoch !== loadSerial || !resource.value) return false
+      const pending = { flowId: resource.value.flowId, version: resource.value.version, revision: resource.value.revision, snapshot: stringifyJson(snapshot), serial }
+      let saved: FlowResource
+      try { saved = await api.saveDraft(resource.value.flowId, resource.value.version, resource.value.revision, snapshot) }
+      catch (error) {
+        if (epoch !== loadSerial) return false
+        if (!(error instanceof Error && 'status' in error) || Number((error as { status?: number }).status) >= 500) {
+          saveUnknown = pending
+          const outcome = await checkSaveOutcome(epoch)
+          if (outcome === 'confirmed') return true
+          if (outcome === 'blocked') return false
+        }
+        throw error
+      }
       if (epoch !== loadSerial) return false
       resource.value = saved
       baseline.value = stringifyJson(saved.document)

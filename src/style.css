@@ -1,5 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-@import "tailwindcss";
+@import "tailwindcss" source(none);
+@source "./";
+@source "../index.html";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
@@ -227,7 +229,7 @@
 .config-button { width: 100%; margin-top: 14px; gap: 7px; color: #4b6ca2; font-size: 13px; }
 .inspector-foot { display: flex; align-items: center; gap: 6px; min-height: 42px; margin-top: auto; padding: 0 19px; border-top: 1px solid #edf1f7; color: #627693; font-size: 12px; }
 [data-slot=dialog-overlay] { background: #15254066; }
-[data-slot=dialog-content].config-dialog { display: flex; flex-direction: column; gap: 20px; width: min(900px,calc(100vw - 40px)); max-width: 900px; max-height: 90vh; padding: 25px; border: 1px solid #e6edf7; border-radius: 14px; background: #fff; box-shadow: 0 15px 60px #18325320; }
+[data-slot=dialog-content].config-dialog { display: flex; flex-direction: column; gap: 20px; width: min(980px,calc(100vw - 40px)); max-width: 980px; max-height: 90vh; padding: 25px; border: 1px solid #e6edf7; border-radius: 14px; background: #fff; box-shadow: 0 15px 60px #18325320; }
 .config-dialog [data-slot=dialog-title] { color: #1b2b48; font-size: 18px; }
 .config-dialog [data-slot=dialog-description] { color: #66778f; font-size: 12px; }
 .config-dialog-body { overflow-y: auto; min-height: 0; }
@@ -295,6 +297,11 @@
 .editor-tab { border: 0; background: transparent; cursor: pointer; }
 .editor-page { display:flex; flex-direction:column; min-height:calc(100vh - 58px); }
 .editor-content { flex:1; }
+@media (min-width:768px) {
+  .editor-page.canvas-active { height:calc(100vh - 62px); min-height:0; }
+  .editor-page.canvas-active .editor-title,.editor-page.canvas-active .editor-tabbar { flex-shrink:0; }
+  .editor-page.canvas-active .editor-content { min-height:0; }
+}
 .sample-badge { white-space:nowrap; }
 .unsaved-badge { color:#9c5e14; background:#fff4d9; border:1px solid #f4daa8; border-radius:5px; padding:2px 7px; font-size:11px; }
 .notice { padding:8px 18px; background:#eff8f3; color:#28674b; border-bottom:1px solid #d7eadf; font-size:12px; }
@@ -364,6 +371,27 @@
 .config-edit-card .field-label,.config-characteristic>.field-label { margin-top:13px; }
 .config-condition-label { color:#667b99; font-size:11px; margin:14px 0 8px; }
 .config-dialog .condition-builder { margin-bottom:4px; }
+.config-table-scroll { overflow-x:auto; }
+.config-table { width:100%; min-width:720px; border-collapse:collapse; table-layout:fixed; font-size:12px; }
+.config-table th,.config-table td { padding:10px 8px; text-align:left; vertical-align:middle; border-bottom:1px solid #edf1f7; }
+.config-table th { color:#667b99; background:#f9fbff; font-weight:500; }
+.config-table th:first-child { width:37%; }
+.config-table th:nth-child(2) { width:18%; }
+.config-table th:nth-child(3) { width:26%; }
+.config-table th:last-child { width:19%; }
+.config-table tbody.config-edit-card { padding:0; margin:0; border:0; border-radius:0; background:#fff; }
+.config-table input { width:100%; min-width:0; height:36px; padding:0 9px; border:1px solid #dfe6f0; border-radius:6px; color:#526785; background:#fff; }
+.config-row-condition { display:flex; align-items:center; gap:8px; }
+.config-row-condition>div { min-width:0; }
+.config-row-condition code { display:block; color:#7c8aa2; font-size:10px; }
+.config-condition-toggle { text-align:left; color:#536e9f; overflow-wrap:anywhere; }
+.config-condition-toggle:hover { color:#3265ed; text-decoration:underline; }
+.config-table .config-card-actions { margin:0; gap:4px; white-space:nowrap; }
+.config-table .config-card-actions button { padding:4px 5px; }
+.config-table .config-expanded-condition { padding:12px 8px; background:#f8faff; }
+.config-characteristic .characteristic-name { flex:0 1 260px; margin:0; }
+.config-characteristic { background:#fff; }
+.row-readonly { color:#7c8aa2; font-size:11px; }
 .fact-presets { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 14px; }
 .publish-card { width:min(480px,100%); }
 .publish-card .field-label { margin:16px 0; }

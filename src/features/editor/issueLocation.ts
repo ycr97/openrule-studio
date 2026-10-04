@@ -1,5 +1,5 @@
 import type { ValidationIssue } from '../../api/types.ts'
-import type { Condition, FlowDefinition, FlowNode } from './sample.ts'
+import type { FlowDefinition } from './sample.ts'
 
 export function locateIssue(document: FlowDefinition, issue: ValidationIssue) {
   const parts = issue.pointer.split('/').filter(Boolean)
@@ -18,14 +18,7 @@ export function locateIssue(document: FlowDefinition, issue: ValidationIssue) {
       const binsIndex = parts.indexOf('bins')
       itemId = binsIndex >= 0 ? characteristic?.bins[Number(parts[binsIndex + 1])]?.id ?? null : characteristic?.id ?? null
     }
-    if (!itemId && issue.message.includes('between')) { itemId = firstInvalidBetween(node); if (itemId) field = 'value' }
   }
   if (field === 'value' && parts.includes('rules') && !parts.includes('condition')) field = 'ruleValue'
   return { stageId: stage?.stageId ?? null, nodeId: node?.nodeId ?? null, itemId, field }
-}
-function firstInvalidBetween(node: FlowNode): string | null {
-  const invalid = (condition: Condition | null): boolean => condition?.kind === 'compare' ? condition.op === 'between' && (!Array.isArray(condition.value) || condition.value.length !== 2) : !!condition && 'children' in condition && condition.children.some(invalid)
-  for (const rule of node.config.rules ?? []) if (invalid(rule.condition)) return rule.id
-  for (const characteristic of node.config.characteristics ?? []) for (const bin of characteristic.bins) if (invalid(bin.condition)) return bin.id
-  return null
 }
