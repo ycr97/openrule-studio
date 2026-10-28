@@ -1,6 +1,6 @@
 # OpenRule Studio
 
-Vue 3 + TypeScript + Vite + Vue Router + shadcn-vue + Tailwind CSS 4。F1 提供原型视觉基础，F2 接入真实 Studio v2 API，F3 完成三类专用编辑器、完整结果和发布闭环；V1 已完成 Studio M1 总体验收与范围内缺陷修复。规则由 Java 服务端执行，调用方提供完整 facts。
+Vue 3 + TypeScript + Vite + Vue Router + shadcn-vue + Tailwind CSS 4。F1 提供原型视觉基础，F2 接入真实 Studio v2 API，F3 完成三类专用编辑器、完整结果和发布闭环；V1 已完成 Studio M1 总体验收与范围内缺陷修复。M1 规则由 Java 服务端执行，调用方提供完整 facts。M2-F1 已通过真实 Java/MySQL/受控 HTTP 的前端验收；Studio M2 总体验收 NOT_RUN。
 
 ## 启动
 
@@ -60,3 +60,29 @@ F1 原型对照基线保留在 `output/playwright/prototype-*`、`studio-*`；F2
 入口：[V1交接](docs/V1-HANDOFF.md)、[完整验收报告](../open-rule/docs/contracts/studio-m1/V1-ACCEPTANCE.md)、[重复加载事件及恢复](docs/V1-AUTOMATION-INCIDENT.md)。上面的F3记录保留为历史证据；当前结论以V1报告为准。
 
 精选V1截图沿用 `output/playwright/` 的版本管理约定；原始日志、数据库备份、源码验收快照和其余截图留在本地证据目录。交付仅本地提交，不push、合并或部署，不自动进入M2。
+
+
+## Studio M2-F1
+
+**M2-F1 前端验收 PASS，Studio M2 总体验收 NOT_RUN。** 事实目录、HTTP/MOCK Provider、三种试运行方式、字段/调用报告已接真实 B2。正常订单一次 HTTP 补齐三字段得到 APPROVE / 15；异常、CAS、输入保留、响应丢失与迟到保护、M1 编辑发布均有浏览器证据。
+
+```sh
+# 本次真实环境：Java 8092，独立 MySQL 3311，受控上游 19092
+STUDIO_CONTRACT_MOCK=0 STUDIO_API_ORIGIN=http://127.0.0.1:8092 \
+  npm run dev -- --port 5176 --strictPort
+# http://127.0.0.1:5176
+```
+
+隔离 Flow 为 `m2_f1_20261028`：v2/r1 试运行，v2/r3 发布只读，v3/r1 为下一草稿。后端与受控服务实际启动命令见交接说明。以下契约 Mock 仅供显式开发使用：
+
+```sh
+# 显式启用契约 Mock；默认启动不启用
+STUDIO_CONTRACT_MOCK=1 npm run dev -- --port 5175 --strictPort
+# /facts、/providers、/flows/order_admission/versions/1?tab=facts
+```
+
+开发控制栏可载入固定场景及配置写入故障。Mock 只匹配冻结的输入/方式/revision/配置，未匹配返回 `501 OR-MOCK-NO-FIXTURE`，不执行规则、评分或事实补数。配置 CRUD 仅在 Vite 进程内保留；浏览器刷新可重读，服务重启或载入场景会重置。真实 API 失败不会自动切换 Mock。production/build 不启用控制入口。
+
+Provider 的响应映射在事实字段 binding 中维护。测试映射调用已保存 Provider revision 的 `mock-tests`，未保存时禁用。secretRef 仅填写引用，前端不读秘密凭证、不调用外部 Provider。大整数/精确小数继续使用无损 JSON。
+
+交接入口：[M2-F1-HANDOFF](docs/M2-F1-HANDOFF.md)，含逐项 PASS/NOT_RUN、12个 API、48项测试、20个真实请求/响应 Schema 检查、上游计数、三种实际 viewport 和原型截图。真实证据索引：[browser-summary.json](output/m2-f1-real/browser-summary.json)。保留第一段契约 Mock 证据并区分验收层级。本轮不提交、不 push，完成后不启动 M2-V1。

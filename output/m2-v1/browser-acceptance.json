@@ -1,0 +1,184 @@
+{
+  "scope": "B/V 可观测子项，不替代 J/I/H 或完整矩阵",
+  "environment": {
+    "frontend": "http://127.0.0.1:5177",
+    "backend": "http://127.0.0.1:8093",
+    "upstream": "http://127.0.0.1:19093",
+    "flow": "m2_v1_browser_20261028",
+    "m1Flow": "m2_v1_ui_order_20261028",
+    "dpr": 1
+  },
+  "cases": {
+    "MF-01": {
+      "status": "PASS",
+      "observed": "真实HTTP三字段一次POST、APPROVE/15",
+      "evidence": "mf01-dom.txt; mf01-before.json; mf01-after.json; report-visual-browser.txt"
+    },
+    "MF-02": {
+      "status": "PASS",
+      "observed": "完整输入无上游请求、APPROVE/15",
+      "evidence": "mf02-dom.txt; mf02-before.json; mf02-after.json"
+    },
+    "MF-04": {
+      "status": "PASS",
+      "observed": "null由CALLER保留、REVIEW及Terminal",
+      "evidence": "mf04-dom.txt; mf04-before.json; mf04-after.json"
+    },
+    "MF-05": {
+      "status": "PASS",
+      "observed": "partial缺失、REVIEW及Terminal",
+      "evidence": "mf05-dom.txt; mf05-before.json; mf05-after.json"
+    },
+    "MF-06": {
+      "status": "PASS",
+      "observed": "Provider超时、REVIEW及Terminal",
+      "evidence": "mf06-dom.txt; mf06-before.json; mf06-after.json"
+    },
+    "MF-08": {
+      "status": "PASS",
+      "observed": "错误类型、REVIEW",
+      "evidence": "mf08-dom.txt; mf08-before.json; mf08-after.json"
+    },
+    "MF-09": {
+      "status": "PASS",
+      "observed": "总deadline 504，上游一次，未进入Core",
+      "evidence": "mf09-dom.txt; mf09-network.txt; mf09-before.json; mf09-after.json"
+    },
+    "MF-10": {
+      "status": "PASS",
+      "observed": "浏览器Mock APPROVE/15，上游0；SecretResolver内部次数另计",
+      "evidence": "mf10-dom.txt; mf10-before.json; mf10-after.json"
+    },
+    "MF-12": {
+      "status": "PASS",
+      "observed": "停用SKIPPED、REVIEW、上游0",
+      "evidence": "restrictions-browser.txt"
+    },
+    "MF-15": {
+      "status": "PASS",
+      "observed": "禁真实模拟SKIPPED、REVIEW、上游0",
+      "evidence": "restrictions-browser.txt"
+    },
+    "MF-18": {
+      "status": "PASS",
+      "observed": "输入金额字符串ABORT，无decision",
+      "evidence": "mf18-dom.txt"
+    },
+    "MF-19": {
+      "status": "PASS",
+      "observed": "Mock TIMEOUT、REVIEW及Terminal，上游0",
+      "evidence": "mf19-dom.txt; mf19-before.json; mf19-after.json"
+    },
+    "MF-21": {
+      "status": "PASS",
+      "observed": "默认M1缺失事实REVIEW，不触上游",
+      "evidence": "mf21-dom.txt; mf21-before.json; mf21-after.json"
+    },
+    "MF-22": {
+      "status": "PASS",
+      "observed": "默认M1完整输入APPROVE/15，不触上游",
+      "evidence": "m1-full-dom.txt; m1-full-before.json; m1-full-after.json"
+    },
+    "MS-06": {
+      "status": "PASS",
+      "observed": "已有字段类型在UI禁用",
+      "evidence": "guard-browser-rerun.txt"
+    },
+    "MS-07": {
+      "status": "PASS",
+      "observed": "Provider CAS 409保留本地输入",
+      "evidence": "provider-cas-browser.txt"
+    },
+    "MT-08-vue": {
+      "status": "PASS",
+      "observed": "大整数和39位小数常量、Mock保存刷新及Mock报告",
+      "evidence": "provider-precision-browser.txt; precision-mock-browser.txt"
+    },
+    "MT-09-projection": {
+      "status": "PASS",
+      "observed": "真实响应敏感和未知输入不回显、输出脱敏、trace一致",
+      "evidence": "redaction-stale-browser-rerun.txt"
+    },
+    "MT-10-config-cas": {
+      "status": "PASS",
+      "observed": "真实CAS 409保留输入",
+      "evidence": "provider-cas-browser.txt"
+    },
+    "MT-10-save-lost": {
+      "status": "PASS",
+      "observed": "真PUT后丢响应，自动GET确认，后续保存成功",
+      "evidence": "provider-lost-rerun.txt"
+    },
+    "MT-10-save-late": {
+      "status": "PASS",
+      "observed": "真PUT A响应延迟，输入B后续保存为B",
+      "evidence": "provider-late-browser.txt"
+    },
+    "MT-10-unsaved": {
+      "status": "PASS",
+      "observed": "未保存禁映射测试、路由保护并保留输入",
+      "evidence": "guard-browser-rerun.txt"
+    },
+    "MT-10-stale": {
+      "status": "PASS",
+      "observed": "修改输入标注旧结果过时",
+      "evidence": "redaction-stale-browser-rerun.txt"
+    },
+    "MT-10-result-late": {
+      "status": "PASS",
+      "observed": "真实响应先完成后延迟；期间修改 facts，旧结果到达标记过时",
+      "evidence": "result-late-browser.txt; ../playwright/m2-v1-result-late.png"
+    },
+    "MT-10-failed-old-result": {
+      "status": "PASS",
+      "observed": "真实成功后修改输入，下一次传输失败，旧结果明确保持过时",
+      "evidence": "result-failure-browser.txt; ../playwright/m2-v1-result-failure.png"
+    },
+    "MT-11-order": {
+      "status": "PASS",
+      "observed": "UI 15/75，45改5保存刷新35，v1/v2发布和LIVE版本隔离",
+      "evidence": "order-browser.txt"
+    },
+    "MT-11-editor-cas-save-publish-lost": {
+      "status": "PASS",
+      "observed": "双标签CAS、真保存/发布丢响应各一次后GET确认",
+      "evidence": "editor-faults-rerun.txt"
+    },
+    "MT-11-error-location": {
+      "status": "PASS",
+      "observed": "反序无效bin和并行冲突的真实校验指针及node/item ID正确，点击定位后焦点分别为value和outputKey",
+      "evidence": "extra-browser-locations.txt; ../playwright/m2-v1-reordered-bin-location.png; ../playwright/m2-v1-reordered-conflict-location.png"
+    },
+    "V-three-viewport": {
+      "status": "PASS",
+      "observed": "事实/Provider/试运行/真实报告采集1440x900、1920x1080、640x900，实际DPR 1；桌面及窄屏人工抽查。试运行采用约定Flow输入页，与原型独立三栏实验室结构不同；非像素相同声明。",
+      "evidence": "report-visual-browser.txt; *-viewport.txt; ../playwright/m2-v1-*.png"
+    }
+  },
+  "limitations": [
+    "结果为浏览器可观测子项；完整 OA/ST 以独立 HTTP、Java 和 MySQL 验证为准。",
+    "首次丢响应脚本误等手动查询按钮；完整重跑见 provider-lost-rerun.txt。",
+    "编辑器首次故障脚本遇 beforeunload；完整重跑见 editor-faults-rerun.txt。"
+  ],
+  "changes": {
+    "productionSource": "无修改",
+    "artifacts": "仅新增本轮浏览器证据、截图、隔离验收脚本及报告；隔离数据库测试配置 revision 有变化"
+  },
+  "history": [
+    {
+      "case": "MT-10-result-late",
+      "prior_status": "NOT_RUN",
+      "reason": "首次浏览器轮次未覆盖；后续独立补测已完成"
+    },
+    {
+      "case": "MT-10-failed-old-result",
+      "prior_status": "NOT_RUN",
+      "reason": "首次浏览器轮次未覆盖；后续独立补测已完成"
+    },
+    {
+      "case": "MT-11-error-location",
+      "prior_status": "NOT_RUN",
+      "reason": "首次浏览器轮次未覆盖；后续独立补测已完成"
+    }
+  ]
+}

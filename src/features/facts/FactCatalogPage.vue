@@ -1,0 +1,49 @@
+<script setup lang="ts">
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { Plus, Database, Search, Pencil, ShieldCheck } from '@lucide/vue'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { factApi } from '@/api/facts'
+import { errorText } from '@/api/client'
+import type { FactDocument, FactPage, ProviderResource } from '@/api/factTypes'
+import { createConfigEditor } from './configState'
+import { factErrors } from './validation'
+import { useUnsavedGuard } from './unsaved'
+import UnsavedDialog from './components/UnsavedDialog.vue'
+const route=useRoute()
+const page=ref(1), pageSize=ref(20), q=ref(''), source=ref<''|'CALLER'|'PROVIDER'>(route.query.source==='PROVIDER'?'PROVIDER':route.query.source==='CALLER'?'CALLER':''), loading=ref(false), error=ref(''), data=ref<FactPage|null>(null)
+let listSerial=0, formSerial=0, providerSerial=0
+async function load() { const serial=++listSerial; loading.value=true; error.value=''; try { const result=await factApi.listFacts({q:q.value,page:page.value,pageSize:pageSize.value,...(source.value?{source:source.value}:{})}); if(serial===listSerial) data.value=result } catch(e) { if(serial===listSerial) error.value=errorText(e) } finally { if(serial===listSerial) loading.value=false } }
+watch([page,pageSize],load,{immediate:true})
+watch(source,()=>{if(page.value!==1) page.value=1; else void load()})
+function search() { if(page.value!==1) page.value=1; else void load() }
+const editor=createConfigEditor<FactDocument>({get:factApi.getFact,create:factApi.createFact,update:factApi.updateFact},value=>value.factId)
+const formOpen=ref(false), dirty=computed(()=>formOpen.value && editor.dirty.value), guard=useUnsavedGuard(dirty)
+const errors=computed(()=>editor.document.value ? factErrors(editor.document.value) : [])
+const providers=ref<ProviderResource[]>([]), providerPage=ref(0), providerTotal=ref(0), providerError=ref(''), providerLoading=ref(false)
+async function loadProviders(reset=false) {
+  if(!reset && providerLoading.value) return
+  const serial=++providerSerial; providerLoading.value=true
+  if(reset) { providers.value=[]; providerPage.value=0; providerTotal.value=0 }
+  try { const next=await factApi.listProviders({page:reset?1:providerPage.value+1,pageSize:100}); if(serial!==providerSerial || !formOpen.value) return; providers.value=reset?next.items:[...providers.value,...next.items]; providerPage.value=next.page; providerTotal.value=next.total; providerError.value='' }
+  catch(e) { if(serial===providerSerial) providerError.value=errorText(e) }
+  finally { if(serial===providerSerial) providerLoading.value=false }
+}
+async function open(id?: string) { if(!(await guard.confirmDiscard())) return; const serial=++formSerial; formOpen.value=true; if(id) await editor.load(id); else editor.begin({factId:`fact_${crypto.randomUUID().slice(0,8)}`,path:'',name:'',type:'number',sensitive:true,description:'',binding:null}); if(serial===formSerial && formOpen.value) void loadProviders(true) }
+async function close(value=false) { if(value || !(await guard.confirmDiscard())) return; formOpen.value=false; formSerial++; providerSerial++; providerLoading.value=false; editor.invalidate() }
+async function save() { if(errors.value.length) return; if(await editor.save()) void load() }
+function setSource(value: string) { if(editor.document.value) editor.document.value.binding=value==='CALLER'?null:{providerId:providers.value[0]?.document.providerId ?? '',responsePointer:''} }
+watch(()=>route.query.edit,id=>{if(typeof id==='string') void open(id)},{immediate:true})
+onBeforeUnmount(()=>{listSerial++; formSerial++; providerSerial++; editor.invalidate()})
+</script>
+<template>
+  <div class="catalog-page"><header class="catalog-head"><div><span class="eyebrow">FACT CATALOG</span><h1>事实字段</h1><p>定义规则使用的数据。缺失字段可按绑定从 Provider 补齐。</p></div><Button @click="open()"><Plus :size="16" />新增事实字段</Button></header>
+    <div class="catalog-info"><Database :size="21" /><div><strong>一份目录，明确事实来源</strong><p>调用方已有值与显式 null 均由服务端保留。新增字段默认标为敏感。</p></div><ShieldCheck :size="23" /></div>
+    <form class="catalog-toolbar" @submit.prevent="search"><label class="catalog-search"><Search :size="16" /><input v-model="q" aria-label="搜索事实字段" maxlength="128" placeholder="搜索名称、ID 或 JSON Pointer" /></label><select v-model="source" aria-label="事实来源筛选"><option value="">全部来源</option><option value="CALLER">调用方输入</option><option value="PROVIDER">Provider 补数</option></select><Button variant="outline" type="submit">搜索</Button><Button variant="ghost" type="button" @click="load">刷新</Button></form>
+    <p v-if="error" class="notice error" role="alert">{{ error }}</p><p v-if="loading" role="status">正在读取事实目录…</p>
+    <div class="catalog-panel"><div class="table-scroll"><table class="catalog-table"><thead><tr><th>事实字段</th><th>JSON Pointer / 类型</th><th>来源 / 响应映射</th><th>敏感信息</th><th>revision</th><th>操作</th></tr></thead><tbody><tr v-for="item in data?.items" :key="item.document.factId"><td><button class="name-cell" @click="open(item.document.factId)"><strong>{{ item.document.name }}</strong><small>{{ item.document.factId }}</small></button></td><td><code>{{ item.document.path }}</code><small>{{ item.document.type }}</small></td><td><span class="state-pill">{{ item.document.binding?'PROVIDER':'CALLER' }}</span><small>{{ item.document.binding?.providerId ?? '由调用方提供' }}</small><code v-if="item.document.binding">{{ item.document.binding.responsePointer || '根对象' }}</code></td><td>{{ item.document.sensitive?'敏感 · 脱敏':'非敏感' }}</td><td><code>{{ item.revision }}</code></td><td><button class="inline-action" :aria-label="`编辑 ${item.document.factId}`" @click="open(item.document.factId)"><Pencil :size="13" />编辑</button></td></tr></tbody></table></div><p v-if="!loading && !data?.items.length" class="catalog-empty">没有匹配的事实字段。</p><footer class="catalog-pagination"><span>共 {{ data?.total ?? 0 }} 条 · 第 {{ page }} 页</span><label>每页 <select v-model="pageSize" aria-label="事实每页数量" @change="page=1"><option :value="5">5</option><option :value="20">20</option><option :value="50">50</option></select></label><Button variant="outline" :disabled="loading || page<=1" @click="page--">上一页</Button><Button variant="outline" :disabled="loading || !data || page*pageSize>=data.total" @click="page++">下一页</Button></footer></div>
+    <Dialog :open="formOpen" @update:open="close"><DialogContent class="catalog-dialog"><DialogHeader><DialogTitle>{{ editor.resource.value?'编辑事实字段':'新增事实字段' }}</DialogTitle><DialogDescription>factId、路径和类型创建后不可修改。绑定与响应映射可更新。</DialogDescription></DialogHeader><p v-if="editor.loading.value">正在读取配置…</p><form v-if="editor.document.value" @submit.prevent="save"><div class="form-grid"><label>事实名称<input v-model="editor.document.value.name" maxlength="128" required /></label><label>factId<input v-model="editor.document.value.factId" :disabled="!!editor.resource.value" required /></label><label>事实 JSON Pointer<input v-model="editor.document.value.path" :disabled="!!editor.resource.value" placeholder="/metrics/refundRate" required /></label><label>字段类型<select v-model="editor.document.value.type" :disabled="!!editor.resource.value"><option>number</option><option>string</option><option>boolean</option></select></label></div><label>说明<textarea v-model="editor.document.value.description" maxlength="1024" rows="2" /></label><div class="form-grid"><label>事实来源<select :value="editor.document.value.binding?'PROVIDER':'CALLER'" @change="setSource(($event.target as HTMLSelectElement).value)"><option>CALLER</option><option>PROVIDER</option></select></label><label class="checkbox-field"><input v-model="editor.document.value.sensitive" type="checkbox" />敏感字段 · 结果中脱敏</label></div><template v-if="editor.document.value.binding"><div class="form-grid"><label>绑定 Provider<select v-model="editor.document.value.binding.providerId"><option value="" disabled>请选择</option><option v-if="editor.document.value.binding.providerId && !providers.some(item=>item.document.providerId===editor.document.value?.binding?.providerId)" :value="editor.document.value.binding.providerId">{{ editor.document.value.binding.providerId }}</option><option v-for="item in providers" :key="item.document.providerId" :value="item.document.providerId">{{ item.document.name }} · {{ item.document.providerId }}{{ item.document.enabled?'':' · 已停用' }}</option></select></label><label>响应 JSON Pointer<input v-model="editor.document.value.binding.responsePointer" placeholder="/data/refundRate" /></label></div><button v-if="providers.length<providerTotal" class="inline-action" type="button" :disabled="providerLoading" @click="loadProviders()">加载更多 Provider</button><p v-if="providerError" class="field-error">{{ providerError }}</p></template><p v-if="errors.length" class="field-error">{{ errors.join('；') }}</p><p v-if="editor.dirty.value" class="unsaved-badge">未保存</p><p v-if="editor.resource.value" class="muted">revision {{ editor.resource.value.revision }} · {{ editor.resource.value.updatedAt }}</p><div v-for="issue in editor.issues.value" :key="issue.pointer" class="field-error"><code>{{ issue.pointer }}</code> {{ issue.message }}</div><p v-if="editor.message.value" class="notice" role="status">{{ editor.message.value }}</p><footer class="config-form-footer"><Button variant="outline" type="button" @click="close()">关闭</Button><Button :disabled="editor.saving.value || errors.length>0" type="submit">{{ editor.saving.value?'保存中…':editor.uncertain.value?'查询保存状态':'保存事实字段' }}</Button></footer></form><p v-else-if="editor.message.value" class="notice error">{{ editor.message.value }}</p></DialogContent></Dialog>
+    <UnsavedDialog :open="guard.open.value" @settle="guard.settle" />
+  </div>
+</template>

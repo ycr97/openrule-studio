@@ -1,0 +1,188 @@
+[
+  {
+    "id": "normal",
+    "acceptance": "MF-01",
+    "request": {
+      "requestId": "mf-01",
+      "bizId": "ORDER-M2-001",
+      "facts": {
+        "order": {
+          "amount": 680,
+          "country": "JP"
+        },
+        "buyer": {
+          "id": "buyer_1024"
+        },
+        "channel": "web"
+      },
+      "timeoutMillis": 3000,
+      "expectedRevision": "1",
+      "factMode": "HTTP"
+    },
+    "response": "normal.response.json",
+    "httpStatus": 200,
+    "providerFile": "risk-profile.provider.json",
+    "providerPatch": {}
+  },
+  {
+    "id": "partial",
+    "acceptance": "MF-05",
+    "request": {
+      "requestId": "mf-05",
+      "bizId": "ORDER-M2-001",
+      "facts": {
+        "order": {
+          "amount": 680,
+          "country": "JP"
+        },
+        "buyer": {
+          "id": "buyer_1024"
+        },
+        "channel": "web"
+      },
+      "timeoutMillis": 3000,
+      "expectedRevision": "1",
+      "factMode": "HTTP"
+    },
+    "response": "partial.response.json",
+    "httpStatus": 200,
+    "providerFile": "risk-profile.provider.json",
+    "providerPatch": {}
+  },
+  {
+    "id": "provider-timeout",
+    "acceptance": "MF-06",
+    "request": {
+      "requestId": "mf-06",
+      "bizId": "ORDER-M2-001",
+      "facts": {
+        "order": {
+          "amount": 680,
+          "country": "JP"
+        },
+        "buyer": {
+          "id": "buyer_1024"
+        },
+        "channel": "web"
+      },
+      "timeoutMillis": 3000,
+      "expectedRevision": "1",
+      "factMode": "HTTP"
+    },
+    "response": "provider-timeout.response.json",
+    "httpStatus": 200,
+    "providerFile": "risk-profile.provider.json",
+    "providerPatch": {}
+  },
+  {
+    "id": "deadline",
+    "acceptance": "MF-09",
+    "request": {
+      "requestId": "mf-09",
+      "bizId": "ORDER-M2-001",
+      "facts": {
+        "order": {
+          "amount": 680,
+          "country": "JP"
+        },
+        "buyer": {
+          "id": "buyer_1024"
+        },
+        "channel": "web"
+      },
+      "timeoutMillis": 20,
+      "expectedRevision": "1",
+      "factMode": "HTTP"
+    },
+    "response": "deadline-before-core.error.json",
+    "httpStatus": 504,
+    "providerFile": "risk-profile.provider.json",
+    "providerPatch": {
+      "readTimeoutMillis": 10000
+    }
+  },
+  {
+    "id": "mock",
+    "acceptance": "MF-10",
+    "request": {
+      "requestId": "mf-10",
+      "bizId": "ORDER-M2-001",
+      "facts": {
+        "order": {
+          "amount": 680,
+          "country": "JP"
+        },
+        "buyer": {
+          "id": "buyer_1024"
+        },
+        "channel": "web"
+      },
+      "timeoutMillis": 3000,
+      "expectedRevision": "1",
+      "factMode": "MOCK"
+    },
+    "response": "mock.response.json",
+    "httpStatus": 200,
+    "providerFile": "risk-profile.provider.json",
+    "providerPatch": {
+      "secretRef": "env:OPENRULE_TEST_NOT_SET"
+    }
+  },
+  {
+    "id": "technical-failure",
+    "acceptance": "MF-18",
+    "request": {
+      "requestId": "mf-18",
+      "bizId": "ORDER-M2-001",
+      "facts": {
+        "order": {
+          "amount": "680",
+          "country": "JP"
+        },
+        "buyer": {
+          "id": "buyer_1024",
+          "ageDays": 365
+        },
+        "channel": "web",
+        "metrics": {
+          "refundRate": 0.08
+        },
+        "risk": {
+          "blacklisted": false
+        }
+      },
+      "timeoutMillis": 3000,
+      "expectedRevision": "1",
+      "factMode": "HTTP"
+    },
+    "response": "technical-failure.error.json",
+    "httpStatus": 500,
+    "providerFile": "risk-profile.provider.json",
+    "providerPatch": {}
+  },
+  {
+    "id": "precision",
+    "acceptance": "MT-08",
+    "request": {
+      "requestId": "mf-01",
+      "bizId": "ORDER-M2-001",
+      "facts": {
+        "order": {
+          "amount": 680,
+          "country": "JP"
+        },
+        "buyer": {
+          "id": "buyer_1024"
+        },
+        "channel": "web"
+      },
+      "timeoutMillis": 3000,
+      "expectedRevision": "1",
+      "factMode": "HTTP"
+    },
+    "response": "precision.response.json",
+    "httpStatus": 200,
+    "providerFile": "precision.provider.json",
+    "providerPatch": {}
+  }
+]

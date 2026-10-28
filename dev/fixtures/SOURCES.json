@@ -1,0 +1,60 @@
+{
+  "copied": [
+    {
+      "source": "studio-m2/fixtures/catalog.json",
+      "file": "catalog.json",
+      "sha256": "4f75133066d39c2c190ace466c114e66f14e1a3f6f89bc207011bd6d005e2ef6"
+    },
+    {
+      "source": "studio-m2/fixtures/valid/risk-profile.provider.json",
+      "file": "risk-profile.provider.json",
+      "sha256": "6a2ed59d1503d6c4181b517416380417e119694ca20670e5cf764e0856a881e3"
+    },
+    {
+      "source": "studio-m2/fixtures/valid/risk-profile-mock.provider.json",
+      "file": "risk-profile-mock.provider.json",
+      "sha256": "78f1479773674b8216653f0b91cb456a94ad828ff51ff2e53bcdfc9ed079db2d"
+    },
+    {
+      "source": "studio-m2/fixtures/valid/precision.provider.json",
+      "file": "precision.provider.json",
+      "sha256": "7b46e77550696aa85f4ff6fa169a8853e9285fa9c52547e1562b70de919c4a0a"
+    },
+    {
+      "source": "studio-m2/fixtures/valid/normal.response.json",
+      "file": "normal.response.json",
+      "sha256": "9cb7844a1b57ff63a5cf2250a58149249c87ebef72c0d55cc3f65e7f33f3e188"
+    },
+    {
+      "source": "studio-m2/fixtures/valid/mock-test.response.json",
+      "file": "mock-test.response.json",
+      "sha256": "32fff8358a051d69c830b168c4462a1456564dfcc4a9eb58c951e4929d5d46ec"
+    },
+    {
+      "source": "studio-m2/fixtures/valid/order-admission.required-facts.json",
+      "file": "order-admission.required-facts.json",
+      "sha256": "6354401be089c9bcdb38a3000ee8b41be94aa38cba658d739a8419aa2606315a"
+    },
+    {
+      "source": "studio-m2/fixtures/valid/deadline-before-core.error.json",
+      "file": "deadline-before-core.error.json",
+      "sha256": "305458851d24e1d46091bb2db8ee2a41786f4d92d78ae5c61aa8f1423333cf78"
+    },
+    {
+      "source": "studio-m2/fixtures/valid/provider-mock-test.request.json",
+      "file": "provider-mock-test.request.json",
+      "sha256": "a056d9e1e985869777745260f4ac93d573f20e6f666755f55d963da6d560bec2"
+    }
+  ],
+  "frontendAuthored": [
+    "partial.response.json",
+    "provider-timeout.response.json",
+    "mock.response.json",
+    "precision.response.json",
+    "technical-failure.error.json",
+    "m1-normal.response.json",
+    "scenarios.json",
+    "m1-complete.request.json"
+  ],
+  "note": "Additional response fixtures are frontend-only projections for contract Mock. No Java or real HTTP execution evidence."
+}

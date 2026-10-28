@@ -25,3 +25,9 @@ test('unsafe ordinary JS numbers cannot be serialized', () => {
   assert.throws(() => stringifyJson({ amount: 9007199254740993 }), RangeError)
   assert.equal(stringifyJson(parseJson('{"a":1e-7}')), '{"a":1e-7}')
 })
+
+test('duplicate keys including escaped aliases and nested maps are rejected',()=>{
+  assert.throws(()=>parseJson('{"x":1,"x":2}'),/重复 JSON/)
+  assert.throws(()=>parseJson('{"x":[{"key":1,"k\\u0065y":2}]}'),/重复 JSON/)
+  assert.equal(stringifyJson(parseJson('{"a":{"x":1},"b":{"x":2}}')),'{"a":{"x":1},"b":{"x":2}}')
+})

@@ -16,7 +16,7 @@ export function errorText(error: unknown): string {
   if (error instanceof ApiError) return error.conflict ? 'OR-REVISION-CONFLICT：服务端 revision 已变化；本地输入保留，请手动核对最新版本' : `${error.body.code}: ${error.message}${error.body.traceId ? ` · trace ${error.body.traceId}` : ''}`
   return error instanceof Error ? error.message : '请求失败'
 }
-async function request<T>(path: string, method = 'GET', payload?: unknown): Promise<T> {
+export async function request<T>(path: string, method = 'GET', payload?: unknown): Promise<T> {
   let response: Response
   try { response = await fetch(`${base}${path}`, { method, headers: { Accept: 'application/json', ...(payload === undefined ? {} : { 'Content-Type': 'application/json' }) }, body: payload === undefined ? undefined : stringifyJson(payload) }) }
   catch { throw new Error('无法连接后端 API；请检查服务地址和 Vite 代理') }

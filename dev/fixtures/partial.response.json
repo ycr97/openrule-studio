@@ -1,0 +1,269 @@
+{
+  "execution": {
+    "requestId": "m2-normal",
+    "traceId": "m2-trace-001",
+    "bizId": "ORDER-M2-001",
+    "purpose": "SIMULATE",
+    "flowId": "order_admission",
+    "version": "1",
+    "revision": "1",
+    "definitionChecksum": "sha256:f32efdc7490d67e1df7ff0b63ff38f91cf5e963808eb46f4af135b4a1e31b0a7",
+    "status": "DECIDED",
+    "decision": {
+      "decisionCode": "REVIEW",
+      "reasonCodes": [
+        "FACT_RESOLUTION_FAILED"
+      ],
+      "score": null,
+      "terminalNodeId": "data_review"
+    },
+    "variables": {
+      "blacklisted": "[REDACTED]",
+      "restriction": "[REDACTED]",
+      "riskScore": "[REDACTED]",
+      "segment": "[REDACTED]"
+    },
+    "stageResults": [
+      {
+        "stageId": "s_base",
+        "status": "SUCCEEDED",
+        "skipReason": null
+      },
+      {
+        "stageId": "s_reject",
+        "status": "SKIPPED",
+        "skipReason": "WHEN_FALSE"
+      },
+      {
+        "stageId": "s_score",
+        "status": "FAILED",
+        "skipReason": null
+      },
+      {
+        "stageId": "s_fallback",
+        "status": "SUCCEEDED",
+        "skipReason": null
+      },
+      {
+        "stageId": "s_review",
+        "status": "SKIPPED",
+        "skipReason": "TERMINATED"
+      },
+      {
+        "stageId": "s_approve",
+        "status": "SKIPPED",
+        "skipReason": "TERMINATED"
+      }
+    ],
+    "nodeResults": [
+      {
+        "stageId": "s_base",
+        "nodeId": "blacklist",
+        "type": "openrule.operator",
+        "status": "SUCCEEDED",
+        "skipReason": null,
+        "hit": false,
+        "outputs": {
+          "blacklisted": "[REDACTED]"
+        },
+        "reasonCodes": [],
+        "details": [],
+        "failure": null,
+        "elapsedMillis": 0
+      },
+      {
+        "stageId": "s_base",
+        "nodeId": "base_rules",
+        "type": "openrule.rule-set",
+        "status": "SUCCEEDED",
+        "skipReason": null,
+        "hit": false,
+        "outputs": {
+          "restriction": "[REDACTED]"
+        },
+        "reasonCodes": [],
+        "details": [],
+        "failure": null,
+        "elapsedMillis": 0
+      },
+      {
+        "stageId": "s_reject",
+        "nodeId": "reject",
+        "type": "openrule.terminal",
+        "status": "SKIPPED",
+        "skipReason": "WHEN_FALSE",
+        "hit": false,
+        "outputs": {},
+        "reasonCodes": [],
+        "details": [],
+        "failure": null,
+        "elapsedMillis": 0
+      },
+      {
+        "stageId": "s_score",
+        "nodeId": "buyer_score",
+        "type": "openrule.scorecard",
+        "status": "FAILED",
+        "skipReason": null,
+        "hit": false,
+        "outputs": {},
+        "reasonCodes": [],
+        "details": [],
+        "failure": {
+          "code": "OR-NODE-FAILED",
+          "message": "Missing value: /metrics/refundRate"
+        },
+        "elapsedMillis": 0
+      },
+      {
+        "stageId": "s_score",
+        "nodeId": "order_segment",
+        "type": "openrule.decision-table",
+        "status": "SUCCEEDED",
+        "skipReason": null,
+        "hit": true,
+        "outputs": {
+          "segment": "[REDACTED]"
+        },
+        "reasonCodes": [
+          "SMALL_ORDER"
+        ],
+        "details": [
+          {
+            "kind": "RULE",
+            "ruleId": "t_low",
+            "reasonCode": "SMALL_ORDER",
+            "value": "[REDACTED]"
+          }
+        ],
+        "failure": null,
+        "elapsedMillis": 0
+      },
+      {
+        "stageId": "s_fallback",
+        "nodeId": "data_review",
+        "type": "openrule.terminal",
+        "status": "SUCCEEDED",
+        "skipReason": null,
+        "hit": true,
+        "outputs": {},
+        "reasonCodes": [
+          "FACT_RESOLUTION_FAILED"
+        ],
+        "details": [],
+        "failure": null,
+        "elapsedMillis": 0
+      },
+      {
+        "stageId": "s_review",
+        "nodeId": "risk_review",
+        "type": "openrule.terminal",
+        "status": "SKIPPED",
+        "skipReason": "TERMINATED",
+        "hit": false,
+        "outputs": {},
+        "reasonCodes": [],
+        "details": [],
+        "failure": null,
+        "elapsedMillis": 0
+      },
+      {
+        "stageId": "s_approve",
+        "nodeId": "approve",
+        "type": "openrule.terminal",
+        "status": "SKIPPED",
+        "skipReason": "TERMINATED",
+        "hit": false,
+        "outputs": {},
+        "reasonCodes": [],
+        "details": [],
+        "failure": null,
+        "elapsedMillis": 0
+      }
+    ],
+    "elapsedMillis": 3
+  },
+  "factResolution": {
+    "mode": "HTTP",
+    "status": "PARTIAL",
+    "elapsedMillis": 12,
+    "fields": [
+      {
+        "path": "/buyer/ageDays",
+        "status": "resolved",
+        "source": "PROVIDER",
+        "factId": "buyer_age_days",
+        "catalogRevision": "1",
+        "providerId": "risk_profile",
+        "providerRevision": "1",
+        "valueSummary": "365",
+        "error": null
+      },
+      {
+        "path": "/metrics/refundRate",
+        "status": "missing",
+        "source": "PROVIDER",
+        "factId": "refund_rate",
+        "catalogRevision": "1",
+        "providerId": "risk_profile",
+        "providerRevision": "1",
+        "valueSummary": null,
+        "error": {
+          "code": "OR-FACT-RESPONSE-MISSING",
+          "message": "Response pointer missing: /data/refundRate"
+        }
+      },
+      {
+        "path": "/order/amount",
+        "status": "resolved",
+        "source": "CALLER",
+        "factId": "order_amount",
+        "catalogRevision": "1",
+        "providerId": null,
+        "providerRevision": null,
+        "valueSummary": "680",
+        "error": null
+      },
+      {
+        "path": "/order/country",
+        "status": "resolved",
+        "source": "CALLER",
+        "factId": "order_country",
+        "catalogRevision": "1",
+        "providerId": null,
+        "providerRevision": null,
+        "valueSummary": "\"JP\"",
+        "error": null
+      },
+      {
+        "path": "/risk/blacklisted",
+        "status": "resolved",
+        "source": "PROVIDER",
+        "factId": "risk_blacklisted",
+        "catalogRevision": "1",
+        "providerId": "risk_profile",
+        "providerRevision": "1",
+        "valueSummary": "[REDACTED]",
+        "error": null
+      }
+    ],
+    "calls": [
+      {
+        "providerId": "risk_profile",
+        "providerRevision": "1",
+        "traceId": "m2-trace-001",
+        "transport": "HTTP",
+        "status": "PARTIAL",
+        "attempted": true,
+        "requestedPaths": [
+          "/buyer/ageDays",
+          "/metrics/refundRate",
+          "/risk/blacklisted"
+        ],
+        "elapsedMillis": 10,
+        "error": null
+      }
+    ]
+  },
+  "totalElapsedMillis": 18
+}

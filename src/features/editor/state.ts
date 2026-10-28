@@ -1,10 +1,12 @@
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { studioApi, errorText } from '../../api/client.ts'
 import type { ExecutionResult, FlowResource, ValidationIssue, ValidationReport } from '../../api/types.ts'
-import { decodeTransport, parseJson, stringifyJson } from '../../api/lossless.ts'
+import { decodeTransport, isDecimal, parseJson, stringifyJson } from '../../api/lossless.ts'
+import { factApi, configurationSerial } from '../../api/facts.ts'
+import type { FactErrorBody, FactMode, FactResolutionReport } from '../../api/factTypes.ts'
 import type { FlowDefinition } from './sample.ts'
 
-export function createEditorState(api: typeof studioApi = studioApi) {
+export function createEditorState(api: typeof studioApi = studioApi, factsApi: typeof factApi = factApi) {
   const resource = ref<FlowResource | null>(null)
   const document = ref<FlowDefinition | null>(null)
   const baseline = ref('')
@@ -17,15 +19,25 @@ export function createEditorState(api: typeof studioApi = studioApi) {
   const message = ref('')
   const issues = ref<ValidationIssue[]>([])
   const result = ref<ExecutionResult | null>(null)
+  const factMode = ref<FactMode>('INPUT')
+  const timeoutMillis = ref(3000)
+  watch(factMode, mode => { if (mode === 'INPUT') timeoutMillis.value = 3000 }, { flush: 'sync' })
+  const resolution = ref<FactResolutionReport | null>(null)
+  const totalElapsedMillis = ref<number | null>(null)
+  const resultContext = ref('')
+  const resultRevision = ref('')
+  const resultRequestSerial = ref(-1)
+  const traceId = ref('')
+  const contextKey = computed(() => stringifyJson([factsText.value, factMode.value, timeoutMillis.value, configurationSerial.value]))
   const resultSerial = ref(-1)
   const resultFacts = ref('')
   let loadSerial = 0
-  let simulationSerial = 0
+  const simulationSerial = ref(0)
   let publicationUnknown = false
   let saveUnknown: { flowId: string; version: string; revision: string; snapshot: string; serial: number } | null = null
   const factsText = ref('{\n  "order": { "amount": 680, "country": "JP" },\n  "buyer": { "id": "buyer_1024", "ageDays": 365 },\n  "metrics": { "refundRate": 0.08 },\n  "risk": { "blacklisted": false },\n  "channel": "web"\n}')
   const dirty = computed(() => !!document.value && stringifyJson(document.value) !== baseline.value)
-  const staleResult = computed(() => !!result.value && (resultSerial.value !== editSerial.value || resultFacts.value !== factsText.value || result.value.revision !== resource.value?.revision))
+  const staleResult = computed(() => !!(result.value || resolution.value) && (resultSerial.value !== editSerial.value || resultFacts.value !== factsText.value || resultRevision.value !== resource.value?.revision || resultContext.value !== contextKey.value || resultRequestSerial.value !== simulationSerial.value))
   const readOnly = computed(() => resource.value?.status !== 'DRAFT')
   function install(next: FlowResource) {
     resource.value = next
@@ -35,17 +47,19 @@ export function createEditorState(api: typeof studioApi = studioApi) {
     issues.value = next.validation.issues
     message.value = ''
     result.value = null
+    resolution.value = null; totalElapsedMillis.value = null; traceId.value = ''
   }
   async function load(flowId: string, version: string) {
     const serial = ++loadSerial
     publicationUnknown = false
     saveUnknown = null
-    simulationSerial++
+    simulationSerial.value++
     saving.value = false; validating.value = false; simulating.value = false; publishing.value = false
     loading.value = true
     resource.value = null
     document.value = null
     result.value = null
+    resolution.value = null; totalElapsedMillis.value = null; traceId.value = ''
     issues.value = []
     message.value = ''
     try { const next = await api.getVersion(flowId, version); if (serial === loadSerial) install(next) }
@@ -127,7 +141,7 @@ export function createEditorState(api: typeof studioApi = studioApi) {
   }
   async function saveAndSimulate() {
     if (simulating.value || publishing.value || validating.value) return
-    const requestSerial = ++simulationSerial
+    const requestSerial = ++simulationSerial.value
     const epoch = loadSerial
     simulating.value = true
     try {
@@ -136,8 +150,10 @@ export function createEditorState(api: typeof studioApi = studioApi) {
       if (dirty.value) { message.value = '保存期间发生新的编辑；请再次保存后试运行'; return }
       if (!resource.value || !document.value) return
       const text = factsText.value
+      const mode = factMode.value, budget = timeoutMillis.value, key = contextKey.value
+      if (!Number.isInteger(budget) || budget < 1 || budget > 60000) { message.value = '请求超时必须为 1～60000 ms'; return }
       let facts: unknown
-      try { facts = parseJson(text); if (!facts || typeof facts !== 'object' || Array.isArray(facts)) throw new Error('facts 必须是 JSON 对象') }
+      try { facts = parseJson(text); if (!facts || typeof facts !== 'object' || Array.isArray(facts) || isDecimal(facts)) throw new Error('facts 必须是 JSON 对象') }
       catch (error) { message.value = errorText(error); return }
       const serial = editSerial.value
       const { flowId, version, revision } = resource.value
@@ -145,19 +161,23 @@ export function createEditorState(api: typeof studioApi = studioApi) {
       if (!report?.valid || epoch !== loadSerial || resource.value?.revision !== revision) return
       message.value = ''
       try {
-        const response = await api.simulate(flowId, version, revision, facts)
-        if (requestSerial === simulationSerial && epoch === loadSerial && resource.value?.revision === revision) { result.value = response; resultSerial.value = serial; resultFacts.value = text; message.value = '服务端试运行完成' }
+        const response = mode === 'INPUT' ? await api.simulate(flowId, version, revision, facts) : await factsApi.simulate(flowId, version, {requestId:crypto.randomUUID(),bizId:`studio-${Date.now()}`,facts:facts as Record<string,unknown>,timeoutMillis:budget,expectedRevision:revision,factMode:mode})
+        if (requestSerial === simulationSerial.value && epoch === loadSerial && resource.value?.revision === revision) {
+          if ('factResolution' in response) { result.value=response.execution; resolution.value=response.factResolution; totalElapsedMillis.value=response.totalElapsedMillis; traceId.value=response.execution.traceId }
+          else { result.value=response; resolution.value=null; totalElapsedMillis.value=null; traceId.value=response.traceId }
+          resultSerial.value=serial; resultFacts.value=text; resultRevision.value=revision; resultContext.value=key; resultRequestSerial.value=requestSerial; message.value='服务端试运行完成'
+        }
       } catch (error) {
-        if (requestSerial === simulationSerial && epoch === loadSerial) {
+        if (requestSerial === simulationSerial.value && epoch === loadSerial) {
           message.value = errorText(error)
           if (error instanceof Error && 'body' in error) {
-            const body = (error as { body: { issues: ValidationIssue[]; execution?: ExecutionResult | null } }).body
+            const body = (error as { body: Partial<FactErrorBody> }).body
             issues.value = body.issues ?? []
-            if (body.execution) { result.value = body.execution; resultSerial.value = serial; resultFacts.value = text }
+            result.value=body.execution ?? null; resolution.value=body.factResolution ?? null; totalElapsedMillis.value=body.totalElapsedMillis ?? null; traceId.value=body.traceId ?? ''; resultSerial.value=serial; resultFacts.value=text; resultRevision.value=revision; resultContext.value=key; resultRequestSerial.value=requestSerial
           }
         }
       }
-    } finally { if (requestSerial === simulationSerial && epoch === loadSerial) simulating.value = false }
+    } finally { if (requestSerial === simulationSerial.value && epoch === loadSerial) simulating.value = false }
   }
   async function publish(changeNote: string): Promise<boolean> {
     if (!resource.value || !document.value || readOnly.value || dirty.value || saving.value || publishing.value) { message.value = dirty.value ? '请先保存当前修改，再确认发布' : '当前草稿无法发布'; return false }
@@ -196,5 +216,5 @@ export function createEditorState(api: typeof studioApi = studioApi) {
       return false
     } finally { if (epoch === loadSerial) publishing.value = false }
   }
-  return { resource, document, dirty, readOnly, loading, saving, validating, simulating, publishing, message, issues, result, staleResult, factsText, install, load, mutate, save, validate, saveAndSimulate, publish }
+  return { resource, document, dirty, readOnly, loading, saving, validating, simulating, publishing, message, issues, result, staleResult, factsText, factMode, timeoutMillis, resolution, totalElapsedMillis, traceId, install, load, mutate, save, validate, saveAndSimulate, publish }
 }

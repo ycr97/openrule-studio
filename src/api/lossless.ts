@@ -5,7 +5,7 @@ export const decimal = (text: string): Decimal => {
   return { __decimal: true, text }
 }
 export const isDecimal = (value: unknown): value is Decimal => !!value && typeof value === 'object' && (value as Decimal).__decimal === true
-const integerKeys = new Set(['schemaVersion', 'order', 'configVersion', 'timeoutMillis', 'elapsedMillis', 'page', 'pageSize', 'total'])
+const integerKeys = new Set(['schemaVersion', 'order', 'configVersion', 'timeoutMillis', 'elapsedMillis', 'page', 'pageSize', 'total', 'connectTimeoutMillis', 'readTimeoutMillis', 'totalElapsedMillis'])
 export function parseJson(text: string): unknown {
   let nonce = crypto.randomUUID()
   while (text.includes(nonce)) nonce = crypto.randomUUID()
@@ -31,6 +31,7 @@ export function parseJson(text: string): unknown {
     rewritten += char
   }
   const parsed: unknown = JSON.parse(rewritten)
+  assertUniqueKeys(rewritten)
   function restore(value: unknown): unknown {
     if (typeof value === 'string' && value.startsWith(marker)) {
       const index = Number(value.slice(marker.length))
@@ -62,7 +63,7 @@ export function decodeTransport(value: unknown, business = false): unknown {
   if (Array.isArray(value)) return value.map(item => decodeTransport(item, business))
   if (isDecimal(value)) return value
   if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, item]) => {
-    const nextBusiness = business || ['facts', 'value', 'variables', 'outputs', 'details', 'config'].includes(key)
+    const nextBusiness = business || ['facts', 'value', 'variables', 'outputs', 'details', 'config', 'requestMap', 'mock'].includes(key)
     if (!nextBusiness && integerKeys.has(key) && isDecimal(item)) {
       const number = Number(item.text)
       if (!Number.isSafeInteger(number)) throw new RangeError(`传输整数超出安全范围: ${key}`)
@@ -71,4 +72,42 @@ export function decodeTransport(value: unknown, business = false): unknown {
     return [key, decodeTransport(item, nextBusiness)]
   }))
   return value
+}
+
+/** Format editor JSON without converting business numbers to Number. */
+export function formatJson(value: unknown, depth = 0): string {
+  if(isDecimal(value) || value === null || typeof value !== 'object') return stringifyJson(value)
+  const pad='  '.repeat(depth), childPad='  '.repeat(depth+1)
+  if(Array.isArray(value)) return value.length ? `[\n${value.map(item=>childPad+formatJson(item,depth+1)).join(',\n')}\n${pad}]` : '[]'
+  const entries=Object.entries(value)
+  return entries.length ? `{\n${entries.map(([key,item])=>`${childPad}${JSON.stringify(key)}: ${formatJson(item,depth+1)}`).join(',\n')}\n${pad}}` : '{}'
+}
+
+/** JSON.parse accepts duplicate keys; the wire contract rejects them. */
+function assertUniqueKeys(text: string) {
+  let cursor=0
+  const whitespace=()=>{while(/\s/.test(text[cursor] ?? '') && cursor<text.length)cursor++}
+  function stringToken(): string {
+    const start=cursor++
+    while(cursor<text.length) { const char=text[cursor++]; if(char==='\\')cursor++; else if(char==='"')break }
+    return JSON.parse(text.slice(start,cursor)) as string
+  }
+  function value() {
+    whitespace()
+    if(text[cursor]==='"') { stringToken(); return }
+    if(text[cursor]==='{') {
+      cursor++; whitespace(); const keys=new Set<string>()
+      if(text[cursor]==='}') {cursor++;return}
+      while(cursor<text.length) {
+        whitespace(); const key=stringToken()
+        if(keys.has(key))throw new SyntaxError(`重复 JSON 字段：${key}`)
+        keys.add(key); whitespace(); cursor++; value(); whitespace()
+        if(text[cursor++]==='}')return
+      }
+    } else if(text[cursor]==='[') {
+      cursor++; whitespace(); if(text[cursor]===']'){cursor++;return}
+      while(cursor<text.length) {value();whitespace();if(text[cursor++]===']')return}
+    } else {while(cursor<text.length && /[a-z]/.test(text[cursor]!))cursor++}
+  }
+  value()
 }

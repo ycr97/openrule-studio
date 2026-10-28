@@ -1,0 +1,226 @@
+{
+  "acceptanceHead": "1c520ca753213a8fea95bd1976887fe1a8c84c02",
+  "files": [
+    {
+      "path": "README.md",
+      "sha256": "379e23166469d8c6e0c80782d377eeae02f7452937b3c16441c1d02f6e33cf58"
+    },
+    {
+      "path": "dev/contractMock.mjs",
+      "sha256": "9aa470c3f775ba8a3aaf9d3d344c5b07e50a62b7766f2104940da24d84c16801"
+    },
+    {
+      "path": "dev/fixtures/SOURCES.json",
+      "sha256": "adde74432dd38313eb912e61c1e7d6a7184e3f90f40e0cde981028671d181b4c"
+    },
+    {
+      "path": "dev/fixtures/catalog.json",
+      "sha256": "4f75133066d39c2c190ace466c114e66f14e1a3f6f89bc207011bd6d005e2ef6"
+    },
+    {
+      "path": "dev/fixtures/deadline-before-core.error.json",
+      "sha256": "305458851d24e1d46091bb2db8ee2a41786f4d92d78ae5c61aa8f1423333cf78"
+    },
+    {
+      "path": "dev/fixtures/m1-complete.request.json",
+      "sha256": "753284199f76dc4966c9bfd5be15362a08649f67321b0fdbffccafd89daea334"
+    },
+    {
+      "path": "dev/fixtures/m1-normal.response.json",
+      "sha256": "bb0bf332aaa0e42127157c7d574f6910152bb2131fcf42aced89cfd1738a6f81"
+    },
+    {
+      "path": "dev/fixtures/mock-test.response.json",
+      "sha256": "32fff8358a051d69c830b168c4462a1456564dfcc4a9eb58c951e4929d5d46ec"
+    },
+    {
+      "path": "dev/fixtures/mock.response.json",
+      "sha256": "e6ee961aa25f333c124368678139a3e43aa961daddd174384afa3eaa2ec1aa6b"
+    },
+    {
+      "path": "dev/fixtures/normal.response.json",
+      "sha256": "9cb7844a1b57ff63a5cf2250a58149249c87ebef72c0d55cc3f65e7f33f3e188"
+    },
+    {
+      "path": "dev/fixtures/order-admission.required-facts.json",
+      "sha256": "6354401be089c9bcdb38a3000ee8b41be94aa38cba658d739a8419aa2606315a"
+    },
+    {
+      "path": "dev/fixtures/partial.response.json",
+      "sha256": "37b27e1ca82e50933f22ed1b80157dad2c199fa1ac107600aae84e89fd91fc8e"
+    },
+    {
+      "path": "dev/fixtures/precision.provider.json",
+      "sha256": "7b46e77550696aa85f4ff6fa169a8853e9285fa9c52547e1562b70de919c4a0a"
+    },
+    {
+      "path": "dev/fixtures/precision.response.json",
+      "sha256": "20d08bbd26c2a839196823e32b180169fee418b29714675a23c6d2a08cf8ef2c"
+    },
+    {
+      "path": "dev/fixtures/provider-mock-test.request.json",
+      "sha256": "a056d9e1e985869777745260f4ac93d573f20e6f666755f55d963da6d560bec2"
+    },
+    {
+      "path": "dev/fixtures/provider-timeout.response.json",
+      "sha256": "15a53f1eed67bf11833ada37ca350a8f3cfc0d8fb407e3fb0bed6c7f678fcd28"
+    },
+    {
+      "path": "dev/fixtures/risk-profile-mock.provider.json",
+      "sha256": "78f1479773674b8216653f0b91cb456a94ad828ff51ff2e53bcdfc9ed079db2d"
+    },
+    {
+      "path": "dev/fixtures/risk-profile.provider.json",
+      "sha256": "6a2ed59d1503d6c4181b517416380417e119694ca20670e5cf764e0856a881e3"
+    },
+    {
+      "path": "dev/fixtures/scenarios.json",
+      "sha256": "744eef28cc9ea755d061a4e6d98a83284698c76936e9f7f79d49d7ab1dbda38f"
+    },
+    {
+      "path": "dev/fixtures/technical-failure.error.json",
+      "sha256": "2915d9c7b68b02cdc57bf199750c6999ef22c443136e3160048e957687bf496f"
+    },
+    {
+      "path": "docs/M2-F1-HANDOFF.md",
+      "sha256": "8b5f10e87c668b8df15fb9af200c92a0d509caf06baa0fd9bcb6e89c7426bb35"
+    },
+    {
+      "path": "scripts/validate-m2-mock-fixtures.py",
+      "sha256": "8119331a3ab404e0b875472d6d429a712cc27a74bcd70bf594c919c10822c1af"
+    },
+    {
+      "path": "src/App.vue",
+      "sha256": "67cc0e554876b83e00cba34389c0153848528f50471f999cb14f827e5d99d630"
+    },
+    {
+      "path": "src/api/client.ts",
+      "sha256": "6a8ac695202885131a4433b00fa6d43a2adaf86b78726737763ab4dc01d5bc91"
+    },
+    {
+      "path": "src/api/factTypes.ts",
+      "sha256": "97e365877ff2e97bffbe7816924ff2d6f444bf8e889239494c1c6ea451de0dfa"
+    },
+    {
+      "path": "src/api/facts.ts",
+      "sha256": "564017576a491e6b22d63ef196aebcc156a0de15320d93a95ffbb5d939aead26"
+    },
+    {
+      "path": "src/api/lossless.ts",
+      "sha256": "0fe625e47e9b7e9386eeca92bddf4bc7a8e18f873a55468cac9345e29b4f7ae1"
+    },
+    {
+      "path": "src/app/router.ts",
+      "sha256": "169381b8fda44ec1bc98e7cdf533854768fc8bc0706b134d0b3f9f76bb25c3ea"
+    },
+    {
+      "path": "src/features/editor/FlowEditorPage.vue",
+      "sha256": "c596e2f9f0f34f672f7470df12c12a132832a06b0ffed359ebd30fc5ad96e822"
+    },
+    {
+      "path": "src/features/editor/state.ts",
+      "sha256": "772c4cf0af83912110a56b2478b5d92ac3622e699c063f1b56e964051614acd9"
+    },
+    {
+      "path": "src/features/facts/FactCatalogPage.vue",
+      "sha256": "7803eea76e43700b72831443794e099ef48ac6d77b9c5f27eb885ce03cb20c93"
+    },
+    {
+      "path": "src/features/facts/components/ContractMockBanner.vue",
+      "sha256": "8c9837739750a199abd235cb4262e30a5c94d16b61a35104ead382ecf17cd1fd"
+    },
+    {
+      "path": "src/features/facts/components/FactResolutionPanel.vue",
+      "sha256": "dba43fe2859f304434ba0cdf7ec90462276e823bbbcfc3fda92fb5aac1c7c5d4"
+    },
+    {
+      "path": "src/features/facts/components/RequiredFactsPanel.vue",
+      "sha256": "10e0872634b5a3755f4d68f33f82c179e4f5e467deb0b0a17b0a5f39de224464"
+    },
+    {
+      "path": "src/features/facts/components/UnsavedDialog.vue",
+      "sha256": "8d3e0af7712eb8e4e256184719162eacdb6b20a1d171bca413a64708e1d160bb"
+    },
+    {
+      "path": "src/features/facts/configState.ts",
+      "sha256": "452e8f80914ec0d270080f5587584c32396297b2c55bd4dd9001a350f74296c8"
+    },
+    {
+      "path": "src/features/facts/unsaved.ts",
+      "sha256": "befb89d2c1be5b202f0d093a76b267a22b29bd0f0bd34544fea1a52a2e43de2c"
+    },
+    {
+      "path": "src/features/facts/validation.ts",
+      "sha256": "98ad26e26944c6289fdb22d672ee901bf19e31bb7976759b0619df2be7727fd4"
+    },
+    {
+      "path": "src/features/providers/ProviderPage.vue",
+      "sha256": "7096ba704fbde451bcc316087fa35dcc1a629275249e55ae51baf97c9d622d81"
+    },
+    {
+      "path": "src/style.css",
+      "sha256": "ab13b04bfd97cc4386a30296838ef386f2cd72567d00ee155fe524208b2b884b"
+    },
+    {
+      "path": "tests/factApi.test.mjs",
+      "sha256": "b1edd31d477c6438f05330008120f3d75792e5d1805709c5dec686a56cc1d664"
+    },
+    {
+      "path": "tests/factState.test.mjs",
+      "sha256": "9f6928186c58ae14fb5c0789ef481895a77d9ebabc69c3498209a399ce5e54ac"
+    },
+    {
+      "path": "tests/lossless.test.mjs",
+      "sha256": "a176bfb3f745cf6b0b66831c094446d5b7a078fabcdfbdb3e7f9ce89f1aea1c0"
+    },
+    {
+      "path": "tests/m2ContractMock.test.mjs",
+      "sha256": "6e53962054ef7a3253e5b95026cf18dd21a8af5bf09ad9668d73daa1122ae7e4"
+    },
+    {
+      "path": "vite.config.ts",
+      "sha256": "0bcf3af574afc136e047471faf4d66e7191fb9ccc8a371dbf3cffb31b409c392"
+    },
+    {
+      "path": "output/m2-v1/browser-acceptance.json",
+      "sha256": "e33c45f4cf407f61195939ce95450b79a73dbd1601b16ca3286545cee540743b"
+    },
+    {
+      "path": "output/playwright/m2-v1-facts-1440x900.png",
+      "sha256": "c67e2aa602776ca47f46c84d15f4dcbc67961038c7d1ac2fb0e4ccdbf2f219f3"
+    },
+    {
+      "path": "output/playwright/m2-v1-providers-1440x900.png",
+      "sha256": "cdf87e3c3fe34537e773d12ce0f1e933c38185f43414191296b1957498d6a440"
+    },
+    {
+      "path": "output/playwright/m2-v1-report-1440x900.png",
+      "sha256": "bbf0392c53b875301058fdb7c440b515a761cbe79378785a1b4405e9c720ad01"
+    },
+    {
+      "path": "output/playwright/m2-v1-simulation-1440x900.png",
+      "sha256": "2c900cc5f67b180566e7f9b3938e0fe05c902302361ccb09e2144630e245c06f"
+    },
+    {
+      "path": "output/playwright/m2-v1-facts-1920x1080.png",
+      "sha256": "2dbffc77aa5b38dd386bebb9a9f0a6cb6f1f04b78387fb3d0473f61a4c5ba9cf"
+    },
+    {
+      "path": "output/playwright/m2-v1-facts-640x900.png",
+      "sha256": "15fa78115f0881c31f06da33a0db50efb22735cb494886c27673d9488e6d4d8d"
+    },
+    {
+      "path": "output/playwright/m2-v1-providers-640x900.png",
+      "sha256": "7f21b9541344e90eefce101e09d90a1e5168550028d61769e46013f25935d099"
+    },
+    {
+      "path": "output/playwright/m2-v1-report-640x900.png",
+      "sha256": "409971fdf931326a6142cc834f6270201df6d53bff93113d722372694d1bab3c"
+    },
+    {
+      "path": "output/playwright/m2-v1-simulation-640x900.png",
+      "sha256": "c51e608ed694f0bb59d0185ea0162f0e277055e4b08e01faea6232d3b8410785"
+    }
+  ],
+  "excluded": "Raw logs, database dumps, intermediate evidence and unselected screenshots remain local. Acceptance report references to excluded evidence require the local archive."
+}

@@ -1,0 +1,25 @@
+import type { ErrorBody, ExecutionResult, Page } from './types.ts'
+export type FactMode = 'INPUT' | 'HTTP' | 'MOCK'
+export type Mapping = { source: 'CONSTANT'; value: unknown } | { source: 'FACT'; pointer: string }
+export type MockConfig = { outcome: 'RESPONSE'; response: Record<string, unknown> } | { outcome: 'TIMEOUT' | 'ERROR'; response: null }
+type ProviderBase = { providerId: string; name: string; description: string; enabled: boolean; requestMap: Record<string, Mapping>; mock: MockConfig }
+export type ProviderDocument = ProviderBase & ({ type: 'MOCK' } | { type: 'HTTP'; endpoint: string; connectTimeoutMillis: number; readTimeoutMillis: number; secretRef: string | null; readOnly: true; allowSimulationHttp: boolean })
+export type FactDocument = { factId: string; path: string; name: string; type: 'number' | 'string' | 'boolean'; sensitive: boolean; description: string; binding: { providerId: string; responsePointer: string } | null }
+export type ConfigResource<D> = { document: D; revision: string; updatedAt: string }
+export type FactResource = ConfigResource<FactDocument>
+export type ProviderResource = ConfigResource<ProviderDocument>
+export type FactPage = Page<FactResource>
+export type ProviderPage = Page<ProviderResource>
+export type ErrorInfo = { code: string; message: string }
+export type FieldResult = { path: string; status: 'resolved' | 'missing' | 'failed'; source: 'CALLER' | 'PROVIDER' | 'NONE'; factId: string | null; catalogRevision: string | null; providerId: string | null; providerRevision: string | null; valueSummary: string | null; error: ErrorInfo | null }
+export type CallResult = { providerId: string; providerRevision: string; traceId: string; transport: 'HTTP' | 'MOCK'; status: 'SUCCEEDED' | 'PARTIAL' | 'FAILED' | 'TIMED_OUT' | 'SKIPPED' | 'CANCELLED'; attempted: boolean; requestedPaths: string[]; elapsedMillis: number; error: ErrorInfo | null }
+export type FactResolutionReport = { mode: 'HTTP' | 'MOCK'; status: 'COMPLETE' | 'PARTIAL' | 'UNRESOLVED' | 'FAILED'; elapsedMillis: number; fields: FieldResult[]; calls: CallResult[] }
+export type FactExecutionResult = { execution: ExecutionResult; factResolution: FactResolutionReport; totalElapsedMillis: number }
+export type FactErrorBody = ErrorBody & { factResolution: FactResolutionReport | null; totalElapsedMillis: number }
+export type MockTestResult = { requestId: string; traceId: string; factResolution: FactResolutionReport; totalElapsedMillis: number }
+export type FactUse = { pointer: string; stageId: string; nodeId: string | null; itemId: string | null; access: 'VALUE' | 'PRESENCE'; expectedTypes: string[] }
+export type RequiredFactsResource = { flowId: string; version: string; revision: string; definitionChecksum: string; requiredFacts: { path: string; expectedTypes: string[]; typeConflict: boolean; uses: FactUse[] }[] }
+export type FactSimulationRequest = { requestId: string; bizId: string; facts: Record<string, unknown>; timeoutMillis: number; expectedRevision: string; factMode: 'HTTP' | 'MOCK' }
+export type FactExecutionRequest = Omit<FactSimulationRequest, 'expectedRevision' | 'factMode'> & { factMode: 'HTTP' }
+export type MockTestRequest = { requestId: string; facts: Record<string, unknown>; expectedRevision: string; timeoutMillis: number }
+export type ConfigQuery = { q?: string; page?: number; pageSize?: number }
